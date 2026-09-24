@@ -1,0 +1,76 @@
+[project]
+name = "veyrs"
+version = "0.32.0"
+description = "VEYRS — Unified Cybersecurity Risk Management"
+requires-python = ">=3.11"
+license = { text = "Elastic-2.0" }
+
+# ---------------------------------------------------------------------------
+# Direct dependencies ONLY. Everything here is imported by VEYRS's own code, or
+# is required at runtime by something that is (see the two annotated cases).
+# Transitive packages belong in requirements.txt, which is the lock.
+#
+# Versions are pinned rather than floored. This is a security platform: an
+# unattended `pip install` that silently moves cryptography or SQLAlchemy is a
+# change nobody reviewed. Bump deliberately, run ./scripts/test.sh, commit both
+# this file and the lock together.
+# ---------------------------------------------------------------------------
+dependencies = [
+  # web
+  "fastapi==0.115.6",
+  "uvicorn[standard]==0.34.0",
+  # `python-multipart` is never imported by VEYRS. FastAPI needs it at runtime
+  # to parse the scanner uploads (23 UploadFile/Form parameters); without it
+  # every import endpoint 500s at request time, not at boot.
+  "python-multipart==0.0.20",
+  "pydantic==2.10.4",
+  "pydantic-settings==2.7.0",
+
+  # persistence
+  "SQLAlchemy==2.0.36",
+  "psycopg[binary]==3.2.3",
+  "redis==5.2.1",
+
+  # security
+  "argon2-cffi==23.1.0",          # password hashing
+  "cryptography==50.0.0",         # Fernet envelope for stored secrets
+  "python-jose[cryptography]==3.3.0",  # JWT
+  "email-validator==2.3.0",
+  # Directory authentication (`services/ldap_auth.py`). Pure Python, so it adds
+  # no system library to a node. Imported lazily inside the two functions that
+  # talk to a directory, so an upgrade that lands the code before the package
+  # still boots and reports one clear error on the Directory page instead of
+  # failing at import and taking the whole API down.
+  "ldap3==2.9.1",
+  # TOTP is implemented in veyrs/security/mfa.py on hmac+struct from the
+  # standard library. `pyotp` used to be installed and never imported; it was
+  # removed rather than adopted, to keep the auth path free of a third party.
+
+  # outbound
+  "httpx==0.28.1",
+
+  # documents (reports, evidence exports, advisory PDFs)
+  "reportlab==5.0.0",
+  "openpyxl==3.1.5",
+  "python-docx==1.2.0",
+  "pypdf==6.15.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==8.3.4",
+]
+
+[project.scripts]
+veyrs = "veyrs.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = { "" = "backend" }
+
+[tool.setuptools.packages.find]
+where = ["backend"]
+include = ["veyrs*"]
