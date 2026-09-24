@@ -1,0 +1,463 @@
+# VEYRS — single-node evaluation stack.
+#
+#   docker/veyrs-docker.sh init     # generate .env with real secrets
+#   docker/veyrs-docker.sh up       # build + start + wait for ready
+#
+# Run it through that wrapper rather than by hand: the build context is the
+# repository root (one level up from this file) and there are two images, so
+# a bare `docker compose up` from this directory builds the wrong thing.
+#
+# ===========================================================================
+# WHAT THIS STACK IS NOT
+# ===========================================================================
+# It is NOT the production deployment, and it is not trying to be.
+#
+# The three background units a host install runs are all present here, behind
+# COMPOSE PROFILES, and the split is by blast radius rather than by importance:
+#
+#   profile `workers`   intel (NVD + EPSS + CISA KEV + SLA) and digest.
+#                       Outbound HTTPS and SMTP. Not on by default because a
+#                       first `up` would start pulling the NVD corpus -- hours
+#                       of it, against a feed that rate-limits per source
+#                       address -- on a stack somebody is merely trying out.
+#                       WITHOUT THEM THE DATA DOES NOT AGE FORWARD: the
+#                       platform keeps scoring confidently against
+#                       intelligence that has stopped refreshing, and SLA
+#                       deadlines stop elapsing. `veyrs-docker.sh status` says
+#                       so out loud from the machine itself.
+#
+#   profile `agent`     the scanner runner. This one sends unsolicited traffic
+#                       to other people's machines. It needs a template
+#                       corpus, a network posture that reaches the targets,
+#                       and -- for SYN scanning -- NET_RAW. A container given
+#                       those is a smaller VM with more steps. It gets an
+#                       explicit opt-in and a README paragraph, not a default.
+#
+#   docker/veyrs-docker.sh up --with-workers        # intel + digest
+#   docker/veyrs-docker.sh up --with-workers --with-agent
+#
+# Production also separates the application and the database onto different
+# hosts so the standby pair means something. Collapsing them
+# into one compose project is the right trade for evaluation and the wrong one
+# for an installation you intend to keep.
+#
+# ===========================================================================
+
+name: veyrs
+
+# ---------------------------------------------------------------------------
+# The environment is its OWN anchor, separate from any service anchor.
+#
+# Not style: in Compose a service-level `environment:` REPLACES the mapping
+# inherited through `<<:` on the service, it does not merge into it. Written
+# the obvious way -- one anchor carrying both -- giving `init` its extra
+# variables would have DROPPED VEYRS_DATABASE_URL and VEYRS_SECRET_KEY from
+# that container, and it would then have fallen back to the defaults in
+# config.py: 127.0.0.1:5432 (the init container itself, where nothing listens)
+# and a freshly minted random key. Merged at the environment level instead.
+# ---------------------------------------------------------------------------
+x-veyrs-env: &veyrs-env
+  # `postgres` and `redis` are the compose service names. The defaults in
+  # config.py are 127.0.0.1, which inside a container is that container -- the
+  # app would start, connect to nothing, and log normally.
+  VEYRS_DATABASE_URL: postgresql+psycopg://${VEYRS_DB_USER:-veyrs}:${VEYRS_DB_PASSWORD:?VEYRS_DB_PASSWORD is required - run docker/veyrs-docker.sh init}@postgres:5432/${VEYRS_DB_NAME:-veyrs}
+  VEYRS_REDIS_URL: redis://redis:6379/0
+
+  # Both refused rather than defaulted, and for different reasons.
+  #
+  # SECRET_KEY: config.py mints a RANDOM key per process when this is empty.
+  # With 4 uvicorn workers that is 4 different signing keys -- a token issued
+  # by one worker is rejected by the other three, so most authenticated
+  # requests fail intermittently and the failure moves when retried.
+  #
+  # ENCRYPTION_KEY: the Fernet key for stored credentials (ITSM tokens, LDAP
+  # binds, scanner keys). Empty means "derive it from SECRET_KEY", which ties
+  # every stored secret to the session key: rotating one silently destroys the
+  # other. Generated once by `veyrs-docker.sh init` and kept.
+  VEYRS_SECRET_KEY: ${VEYRS_SECRET_KEY:?VEYRS_SECRET_KEY is required - run docker/veyrs-docker.sh init}
+  VEYRS_ENCRYPTION_KEY: ${VEYRS_ENCRYPTION_KEY:?VEYRS_ENCRYPTION_KEY is required - run docker/veyrs-docker.sh init}
+
+  VEYRS_ENVIRONMENT: ${VEYRS_ENVIRONMENT:-development}
+
+  # The console is the ONLY hop in front of the API and it is inside this
+  # stack, so X-Forwarded-For here is trustworthy. Left at the default of
+  # false, ratelimit.py falls back to request.client.host -- which in a
+  # container is always the console's address, so all callers share ONE
+  # rate-limit bucket and the first busy user locks out everyone else.
+  #
+  # This is only safe while the api service publishes no port. There is a test.
+  VEYRS_TRUST_PROXY_HEADERS: "true"
+
+  # Same-origin: the console proxies /api/ on its own hostname, so CORS is not
+  # load bearing for this deployment. Set it only if you put something else in
+  # front. The default in config.py is a fleet hostname that means nothing here.
+  VEYRS_CORS_ORIGINS: ${VEYRS_CORS_ORIGINS:-http://localhost:8080}
+  VEYRS_PUBLIC_BASE_URL: ${VEYRS_PUBLIC_BASE_URL:-http://localhost:8080}
+
+  TZ: ${TZ:-UTC}
+
+services:
+  # -------------------------------------------------------------------------
+  postgres:
+    image: postgres:15-bookworm
+    restart: unless-stopped
+    environment:
+      # The SUPERUSER is `postgres`, NOT the application role.
+      #
+      # Setting POSTGRES_USER=veyrs -- the obvious thing -- makes the
+      # application role a superuser, and a PostgreSQL superuser BYPASSES ROW
+      # LEVEL SECURITY unconditionally. 70 of VEYRS' 87 tables carry FORCE ROW
+      # LEVEL SECURITY; it is what keeps one tenant from reading another's
+      # assets and risk entries. Under a superuser every one of those policies
+      # silently stops applying: nothing errors, nothing logs, \d still lists
+      # them. See initdb.d/10-app-role.sh.
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required - run docker/veyrs-docker.sh init}
+      POSTGRES_DB: postgres
+      # Consumed by initdb.d/10-app-role.sh on the first start only.
+      VEYRS_DB_USER: ${VEYRS_DB_USER:-veyrs}
+      VEYRS_DB_PASSWORD: ${VEYRS_DB_PASSWORD:?VEYRS_DB_PASSWORD is required}
+      VEYRS_DB_NAME: ${VEYRS_DB_NAME:-veyrs}
+      TZ: ${TZ:-UTC}
+    volumes:
+      - veyrs-pgdata:/var/lib/postgresql/data
+      # Executed ONLY when PGDATA is empty. Editing this script after the first
+      # `up` changes nothing until the volume is destroyed.
+      - ./initdb.d:/docker-entrypoint-initdb.d:ro
+    # DELIBERATELY NO `ports:`. The database is reachable only on this stack's
+    # network; an operator who needs psql goes through veyrs-docker.sh psql.
+    networks:
+      - veyrs
+    healthcheck:
+      # A real login as the APPLICATION role into the APPLICATION database.
+      #
+      # `pg_isready` is not enough: it answers "accepting connections" as soon
+      # as the postmaster is listening, which on a first start is BEFORE
+      # initdb.d has created the veyrs role. The init service then starts,
+      # fails authentication, and the error reads like a wrong password in
+      # .env rather than a race. Healthy here means the app can actually get in.
+      test: ["CMD-SHELL", "PGPASSWORD=$$VEYRS_DB_PASSWORD psql -h 127.0.0.1 -U $$VEYRS_DB_USER -d $$VEYRS_DB_NAME -c 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  # -------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Rate-limit counters and short-lived cache only -- derivable state, so no
+    # volume: losing it on restart resets a window, it does not lose data.
+    #
+    # It is still a REQUIRED service, not an optional one: /readyz reports
+    # degraded (503) without it, which is the correct signal. Persistence is
+    # off for the same reason -- an RDB snapshot of rate-limit counters is
+    # write amplification for data that is worthless one minute later.
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    networks:
+      - veyrs
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  # -------------------------------------------------------------------------
+  # Schema + first administrator. Runs to completion before `api` starts, on
+  # every `up`, and is idempotent -- see docker/init.sh for the guard that
+  # stops it from resetting the admin password on every restart.
+  init:
+    build: &veyrs-build
+      # One level up: the Dockerfile copies backend/, frontend/, scripts/ and
+      # requirements.txt, none of which are under docker/.
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: api
+    image: ${VEYRS_IMAGE:-veyrs:local}
+    restart: "no"
+    # Root, for exactly one reason: named volumes are created EMPTY AND
+    # ROOT-OWNED on first `up`, whatever the image did at build time, and the
+    # API runs as uid 10001. init.sh chowns /opt/veyrs/var and then does
+    # nothing else privileged.
+    user: "0:0"
+    command: ["/opt/veyrs/docker/init.sh"]
+    environment:
+      <<: *veyrs-env
+      # The SUPERUSER credentials go to THIS service and to no other.
+      #
+      # init.sh needs them to read `users` -- an RLS-forced table -- to decide
+      # whether an administrator already exists. The api service never
+      # receives them: a long-lived, network-reachable process holding the
+      # credentials that bypass tenant isolation is the single worst thing
+      # this stack could hand an attacker who finds an SSRF or a template bug.
+      VEYRS_DB_HOST: postgres
+      VEYRS_DB_PORT: "5432"
+      VEYRS_DB_NAME: ${VEYRS_DB_NAME:-veyrs}
+      VEYRS_DB_SUPERUSER: postgres
+      VEYRS_DB_SUPERUSER_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      VEYRS_ADMIN_ORG: ${VEYRS_ADMIN_ORG:-veyrs}
+      VEYRS_ADMIN_EMAIL: ${VEYRS_ADMIN_EMAIL:-admin@veyrs.local}
+      VEYRS_ADMIN_PASSWORD: ${VEYRS_ADMIN_PASSWORD:-}
+      VEYRS_ADMIN_NAME: ${VEYRS_ADMIN_NAME:-}
+      VEYRS_ADMIN_FULL_NAME: ${VEYRS_ADMIN_FULL_NAME:-}
+      VEYRS_FORCE_BOOTSTRAP: ${VEYRS_FORCE_BOOTSTRAP:-0}
+    volumes:
+      - veyrs-var:/opt/veyrs/var
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - veyrs
+    healthcheck:
+      # The image HEALTHCHECK curls :8000. This service does not listen, so it
+      # would sit at "starting" and settle on "unhealthy" forever. A health
+      # signal that is permanently red for a container doing its job is worse
+      # than none: it teaches the operator to ignore the column meant to carry
+      # the alarm.
+      disable: true
+
+  # -------------------------------------------------------------------------
+  api:
+    build: *veyrs-build
+    image: ${VEYRS_IMAGE:-veyrs:local}
+    restart: unless-stopped
+    environment:
+      <<: *veyrs-env
+      VEYRS_WORKERS: ${VEYRS_WORKERS:-4}
+      # Only the console may be believed about the caller's address. "*" would
+      # let anyone who reaches this port claim any source IP; the default of
+      # "trust nobody" would make every request look like it came from the
+      # console. Pinned to the console's static address below -- which is why
+      # that address is static.
+      VEYRS_FORWARDED_ALLOW_IPS: ${VEYRS_CONSOLE_IP:-172.29.0.10}
+    volumes:
+      - veyrs-var:/opt/veyrs/var
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    # DELIBERATELY NO `ports:`. The API is reached through `console`.
+    #
+    # Publishing it would also break VEYRS_TRUST_PROXY_HEADERS above: with the
+    # port open, any caller can set X-Forwarded-For and mint a fresh
+    # rate-limit identity per request, which turns the credential-stuffing
+    # limit on /auth/* into decoration. tests/test_container_stack.py fails if
+    # a `ports:` key appears here.
+    expose:
+      - "8000"
+
+    # NOT pinned to a static address, and that was tried.
+    #
+    # nginx caches the address it resolves for `proxy_pass` at config load, so
+    # a recreated `api` on a new address makes the console serve 502 while both
+    # containers still report healthy (see console.conf). Pinning api looked
+    # like the tidy fix and broke `docker compose run`, which creates a SECOND
+    # container of this service and cannot reuse the address:
+    #
+    #   Error response from daemon: failed to set up container networking:
+    #   Address already in use
+    #
+    # That is `veyrs-docker.sh cli`, and the tenant-isolation assertions in
+    # scripts/test-docker-stack.sh, both gone. The stale-upstream problem is
+    # solved in nginx instead, where it belongs.
+    networks:
+      - veyrs
+
+  # -------------------------------------------------------------------------
+  console:
+    build:
+      <<: *veyrs-build
+      target: console
+    image: ${VEYRS_CONSOLE_IMAGE:-veyrs-console:local}
+    restart: unless-stopped
+    depends_on:
+      api:
+        # Not service_started: nginx resolves `api` at config load and exits
+        # with "host not found in upstream" if the container is not up yet,
+        # and a restart loop there looks like a broken config file.
+        condition: service_healthy
+    ports:
+      # Bound to LOOPBACK by default. An evaluation stack that arrives
+      # listening on every interface is a VEYRS console -- an operator surface
+      # with a login form -- published to the local network by an operator who
+      # only meant to try it. Override VEYRS_HTTP_BIND deliberately.
+      - "${VEYRS_HTTP_BIND:-127.0.0.1:8080}:80"
+    networks:
+      veyrs:
+        # STATIC, because VEYRS_FORWARDED_ALLOW_IPS above matches an exact
+        # address. A dynamic address means uvicorn stops believing its own
+        # proxy after any recreate that reorders container startup -- and it
+        # fails quietly: every user lands in one rate-limit bucket and every
+        # audit entry records the proxy as the actor.
+        ipv4_address: ${VEYRS_CONSOLE_IP:-172.29.0.10}
+
+  # -------------------------------------------------------------------------
+  # intel — what veyrs-intel-sync.timer does on a host. Profile: workers.
+  intel:
+    profiles: ["workers"]
+    build: *veyrs-build
+    image: ${VEYRS_IMAGE:-veyrs:local}
+    restart: unless-stopped
+    # It runs scripts/sync-intel.sh -- THE SAME SCRIPT the host timer runs,
+    # not a re-implementation of it.
+    #
+    # That matters more than it looks. The script carries the feed ORDER (CWE
+    # names what NVD creates; EPSS skips CVEs it has never seen; KEV is the
+    # last word), the per-feed isolation that keeps a failed EPSS from
+    # cancelling KEV, and the SLA sweep that must run even on a tick where no
+    # feed was due. Spelling that out again as a compose `command` would be
+    # the same ladder written twice, and the copy that drifts is always the
+    # one nobody runs by hand. scripts/sync-intel.sh resolves its own root and
+    # interpreter so that it works here with no venv and no .env.
+    #
+    # 3600s, because the host unit is OnCalendar=hourly -- and for the same
+    # reason: THE TICK IS NOT THE SCHEDULE. The cadence lives in
+    # organizations.settings.intel_schedule and `veyrs intel-due` decides
+    # which feeds have actually come due. 600s of jitter matches
+    # RandomizedDelaySec on the host unit: NVD rate-limits per source address.
+    command: ["/opt/veyrs/docker/tick.sh", "intel", "3600", "600",
+              "bash", "/opt/veyrs/scripts/sync-intel.sh"]
+    environment:
+      <<: *veyrs-env
+    volumes:
+      - veyrs-var:/opt/veyrs/var
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    networks:
+      - veyrs
+    healthcheck:
+      # Same reasoning as `init`: this container opens no port, so the image's
+      # /readyz probe would be permanently red for a process doing its job.
+      disable: true
+
+  # -------------------------------------------------------------------------
+  # digest — what veyrs-digest.timer does on a host. Profile: workers.
+  digest:
+    profiles: ["workers"]
+    build: *veyrs-build
+    image: ${VEYRS_IMAGE:-veyrs:local}
+    restart: unless-stopped
+    # Hourly tick again, and again NOT a schedule: the hour lives in
+    # organizations.settings.digest and `services.digest.due_now` refuses a
+    # run that already went out inside the last twelve hours. Pinning 07:00
+    # here would make the console's setting decorative.
+    #
+    # 300s of jitter, matching the host unit -- and there it is not for rate
+    # limiting: it keeps the digest off the exact minute the intel sync
+    # starts, so a fanned-out mail run and an NVD pull are not competing for
+    # the same single-core container.
+    command: ["/opt/veyrs/docker/tick.sh", "digest", "3600", "300",
+              "bash", "/opt/veyrs/scripts/send-digest.sh"]
+    environment:
+      <<: *veyrs-env
+      # Without a host the digest has nowhere to go. Left empty it is not an
+      # error: `veyrs digest` writes the notification rows either way, and the
+      # next tick retries the transport. Set these to actually deliver mail.
+      VEYRS_SMTP_HOST: ${VEYRS_SMTP_HOST:-}
+      VEYRS_SMTP_PORT: ${VEYRS_SMTP_PORT:-25}
+      VEYRS_SMTP_USER: ${VEYRS_SMTP_USER:-}
+      VEYRS_SMTP_PASSWORD: ${VEYRS_SMTP_PASSWORD:-}
+      VEYRS_SMTP_FROM: ${VEYRS_SMTP_FROM:-}
+      VEYRS_SMTP_STARTTLS: ${VEYRS_SMTP_STARTTLS:-true}
+    volumes:
+      - veyrs-var:/opt/veyrs/var
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    networks:
+      - veyrs
+    healthcheck:
+      disable: true
+
+  # -------------------------------------------------------------------------
+  # agent — the scanner runner. Profile: agent. READ docker/README.md FIRST.
+  agent:
+    profiles: ["agent"]
+    build:
+      <<: *veyrs-build
+      target: agent
+    image: ${VEYRS_AGENT_IMAGE:-veyrs-agent:local}
+    restart: unless-stopped
+    environment:
+      # Straight to the API on the stack network, not through the console:
+      # this is machine-to-machine traffic and there is no reason to put an
+      # nginx hop in it. The agent sends no X-Forwarded-For, so uvicorn --
+      # which is pinned to believe only the console's address -- correctly
+      # rate-limits it as itself.
+      VEYRS_URL: ${VEYRS_AGENT_URL:-http://api:8000}
+
+      # NOT `${VEYRS_AGENT_TOKEN:?...}`, deliberately.
+      #
+      # Compose interpolates the WHOLE file when it loads it, profiles or not.
+      # A required-variable marker here would make every `up`, `ps`, `logs`
+      # and `down` of the base stack fail for a service the operator never
+      # asked to run. The guard belongs where it already is: veyrs_agent.py
+      # refuses to start without VEYRS_URL, VEYRS_AGENT_TOKEN and a non-empty
+      # VEYRS_AGENT_ALLOW, and repeating it here would be a second copy to
+      # drift. Mint the token in the console: Settings -> Agents.
+      VEYRS_AGENT_TOKEN: ${VEYRS_AGENT_TOKEN:-}
+
+      # Deny-by-default, enforced by the agent itself: an empty allowlist
+      # means NOTHING is scannable, not everything. This is defence in depth
+      # against a compromised or spoofed server handing out targets -- the
+      # operator of the machine decides what it may point at, and that
+      # decision does not live on the server.
+      VEYRS_AGENT_ALLOW: ${VEYRS_AGENT_ALLOW:-}
+      VEYRS_AGENT_POLL: ${VEYRS_AGENT_POLL:-5}
+      VEYRS_AGENT_JOB_TIMEOUT: ${VEYRS_AGENT_JOB_TIMEOUT:-1800}
+      TZ: ${TZ:-UTC}
+    volumes:
+      # The ~84 MB nuclei corpus, in a volume rather than an image layer.
+      # Templates change daily: baked in, a container up for a month scans
+      # with a month-old corpus and says nothing about it. Seeded on first
+      # start by docker/agent-entrypoint.sh, which REFUSES TO START if the
+      # corpus is empty -- a nuclei with no templates does not error, it
+      # reports a clean scan for every asset it is handed.
+      - veyrs-agent-home:/opt/veyrs/agent-home
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - veyrs
+    # SIGINT, not SIGTERM: veyrs_agent.py exits 0 on KeyboardInterrupt, so
+    # this is its graceful stop. The host unit sets the same KillSignal for
+    # the same reason. A job in flight is abandoned either way and its lease
+    # is collected by POST /api/v1/agents/maintenance/reap.
+    stop_signal: SIGINT
+    stop_grace_period: 60s
+
+    # NET_RAW is NOT granted.
+    #
+    # It is what nmap needs for SYN scanning, and it is also the capability
+    # that lets a process forge packets on the stack network. Connect-scan
+    # works without it. Uncomment only if you have decided that this container
+    # is allowed to do that, and know that it stops being meaningfully
+    # confined at that point:
+    #
+    # cap_add:
+    #   - NET_RAW
+
+networks:
+  veyrs:
+    driver: bridge
+    ipam:
+      config:
+        # Pinned so the console's static address above is allocatable. Change
+        # both together, or neither.
+        - subnet: ${VEYRS_SUBNET:-172.29.0.0/16}
+
+volumes:
+  # The cluster. Destroying this destroys the installation -- `down -v` is not
+  # a restart.
+  veyrs-pgdata:
+  # Evidence files, generated reports and uploaded documents: the only thing
+  # the application writes outside the database.
+  veyrs-var:
+  # The scanner agent's HOME: nuclei's config, cache and ~84 MB template
+  # corpus. Created only when the `agent` profile is used. Deleting it is not
+  # destructive -- the next start re-downloads the corpus -- but the first
+  # start after that is several minutes of GitHub traffic.
+  veyrs-agent-home:

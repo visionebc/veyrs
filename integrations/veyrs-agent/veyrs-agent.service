@@ -1,0 +1,45 @@
+[Unit]
+Description=VEYRS execution agent (scanner runner)
+Documentation=https://veyrs-docs.example.com/deployment.html
+After=network-online.target veyrs-api.service
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=root
+WorkingDirectory=/opt/veyrs/integrations/veyrs-agent
+# VEYRS_URL, VEYRS_AGENT_TOKEN, VEYRS_AGENT_ALLOW, VEYRS_AGENT_RESOLVERS.
+# 0600: the token is a credential that reaches the agent data plane.
+EnvironmentFile=/etc/veyrs-agent/agent.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/veyrs/venv/bin/python veyrs_agent.py --poll 5 --job-timeout 1800
+
+# The agent exits 0 on KeyboardInterrupt, so SIGINT is a graceful stop where
+# SIGTERM is not. A job in flight is abandoned either way and its lease is
+# collected by `POST /api/v1/agents/maintenance/reap`.
+KillSignal=SIGINT
+# Longer than --job-timeout would block a reboot behind a running scan; shorter
+# is honest about what happens: the lease is reaped, the scan is re-queued.
+TimeoutStopSec=60
+Restart=always
+RestartSec=10
+
+# --- hardening. Deliberately NOT ProtectHome: nuclei reads its ~13.5k
+# templates from /root/nuclei-templates and keeps state in /root/.config/nuclei,
+# so locking /root turns every scan into a silent zero-template run - which is
+# precisely the failure mode phase 19 exists to prevent.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

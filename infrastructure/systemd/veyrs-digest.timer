@@ -1,0 +1,21 @@
+[Unit]
+Description=VEYRS daily digest tick
+Documentation=file:/opt/veyrs/scripts/send-digest.sh
+
+[Timer]
+# HOURLY TICK, NOT A SCHEDULE — the same shape as veyrs-intel-sync.timer and
+# for the same reason. The hour lives in organizations.settings.digest
+# (Notifications -> Digest in the console) and `services.digest.due_now`
+# decides whether this is it, per organization. Pinning OnCalendar to 07:00
+# would make a setting the console displays and the machine ignores.
+OnCalendar=hourly
+# Small, and not for rate limiting: it keeps the digest off the exact minute
+# the intelligence sync starts, so a nightly NVD pull and a fanned-out mail run
+# are not competing for the same single-core container.
+RandomizedDelaySec=300
+# A host that was off overnight still owes yesterday's readers their digest —
+# `due_now` will refuse it if one already went out inside the last 12 h.
+Persistent=true
+
+[Install]
+WantedBy=timers.target
