@@ -1,0 +1,10 @@
+[Unit]
+Description=Weekly proof that the VEYRS backup actually restores
+
+[Timer]
+OnCalendar=Sun *-*-* 04:30:00
+RandomizedDelaySec=600
+Persistent=true
+
+[Install]
+WantedBy=timers.target

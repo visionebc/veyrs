@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VEYRS Console — Unified Cybersecurity Risk Management</title>
+<meta name="description" content="VEYRS management console.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/static/veyrs-favicon.png" type="image/png">
+<link rel="stylesheet" href="/static/veyrs-tokens.css">
+<link rel="stylesheet" href="/console.css?v=14">
+</head>
+<body>
+
+<!-- ── Login ───────────────────────────────────────────────────────────── -->
+<div id="login" class="login" hidden>
+  <div class="login-hero">
+    <img src="/static/veyrs-logo-on-dark-gradient.png" alt="VEYRS — Unified Cybersecurity Risk Management" class="login-logo">
+    <p class="login-chain">Visibility → Exposure → Risk → Action → Security</p>
+    <dl class="veyrs-key">
+      <div><dt>V</dt><dd><b>Visibility</b><span>Complete visibility across assets, vulnerabilities and posture.</span></dd></div>
+      <div><dt>E</dt><dd><b>Exposure</b><span>Attack surface and exposure, internal and external, in context.</span></dd></div>
+      <div><dt>Y</dt><dd><b>Yield</b><span>Prioritising the actions that deliver the greatest risk reduction.</span></dd></div>
+      <div><dt>R</dt><dd><b>Risk</b><span>Assessing, quantifying, prioritising and managing cyber risk.</span></dd></div>
+      <div><dt>S</dt><dd><b>Security</b><span>Comprehensive security management across the organisation.</span></dd></div>
+    </dl>
+    <p class="login-blurb">Assets · Vulnerabilities · Threat Intel · Risk · SLA · Remediation · Compliance</p>
+  </div>
+  <div class="login-panel">
+    <form id="login-form" class="login-form" autocomplete="on">
+      <h1>Sign in</h1>
+      <p class="muted">Enter your organization credentials.</p>
+      <label for="l-org">Organization</label>
+      <input id="l-org" name="organization" autocomplete="organization" required placeholder="visionebc">
+      <label for="l-email">Email or username</label>
+      <!-- type=text, not type=email. The browser's own validation would refuse
+           `jsmith` before the form is ever submitted, so leaving it as `email`
+           makes usernames impossible to type no matter what the backend
+           accepts. -->
+      <input id="l-email" name="username" type="text" autocomplete="username"
+             spellcheck="false" autocapitalize="none" required>
+      <label for="l-pass">Password</label>
+      <input id="l-pass" name="password" type="password" autocomplete="current-password" required>
+      <div id="l-mfa-wrap" hidden>
+        <label for="l-mfa">MFA code</label>
+        <input id="l-mfa" inputmode="numeric" autocomplete="one-time-code">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+      <p id="login-error" class="form-error" hidden></p>
+    </form>
+    <p class="login-foot">VEYRS · <a href="/">Documentation</a></p>
+  </div>
+</div>
+
+<!-- ── Application shell ───────────────────────────────────────────────── -->
+<div id="shell" class="shell" hidden>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="/static/veyrs-mark-gradient.png" alt="" class="brand-mark">
+      <div class="brand-text">
+        <span class="brand-name">VEYRS</span>
+        <span class="brand-org" id="org-name">—</span>
+      </div>
+      <button class="btn-ghost" id="rail-btn" title="Collapse sidebar" aria-label="Collapse sidebar">«</button>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidebar-foot">
+      <button class="btn-ghost" id="theme-toggle" title="Toggle theme">◐ Theme</button>
+      <a class="btn-ghost" href="/" title="Documentation">Docs</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn only-mobile" id="menu-btn" aria-label="Menu">☰</button>
+      <form class="search" id="search-form" role="search">
+        <input id="q" placeholder="Search, or press ⌘K / Ctrl-K" aria-label="Search">
+      </form>
+      <div class="topbar-right">
+        <button class="icon-btn" id="notif-btn" title="Notifications">🔔<span class="badge" id="notif-badge" hidden>0</span></button>
+        <div class="user-chip" id="user-chip">
+          <span id="user-name">—</span>
+          <button class="btn-ghost" id="logout-btn">Sign out</button>
+        </div>
+      </div>
+    </header>
+    <main class="view" id="view"><div class="loading">Loading…</div></main>
+  </div>
+</div>
+
+<div id="toast-stack" class="toast-stack"></div>
+<div id="modal-root"></div>
+
+<script src="/app.js?v=30"></script>
+</body>
+</html>
