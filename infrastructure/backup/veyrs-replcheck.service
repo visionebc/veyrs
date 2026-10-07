@@ -1,0 +1,7 @@
+[Unit]
+Description=VEYRS streaming replication health check
+Documentation=https://veyrs-docs.example.com/HIGH_AVAILABILITY.html
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/veyrs-replcheck.sh

@@ -1,0 +1,12 @@
+[Unit]
+Description=Nightly VEYRS logical database backup
+
+[Timer]
+# 02:15, ahead of veyrs-intel-sync at 03:30 so the dump never races a
+# 350k-row EPSS ingest.
+OnCalendar=*-*-* 02:15:00
+RandomizedDelaySec=300
+Persistent=true
+
+[Install]
+WantedBy=timers.target

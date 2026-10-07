@@ -1,0 +1,45 @@
+[Unit]
+Description=VEYRS API (FastAPI/uvicorn)
+Documentation=https://veyrs-docs.example.com/deployment.html
+After=network-online.target postgresql.service redis-server.service
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=root
+WorkingDirectory=/opt/veyrs
+EnvironmentFile=/opt/veyrs/.env
+Environment=PYTHONPATH=/opt/veyrs/backend
+Environment=PYTHONUNBUFFERED=1
+# Workers: uvicorn is asyncio, and VEYRS handlers are synchronous SQLAlchemy, so
+# throughput comes from processes, not from a bigger event loop. 4 matches the
+# container's vCPU count; raise together with the Postgres pool, not alone.
+ExecStart=/opt/veyrs/venv/bin/uvicorn veyrs.main:app \
+    --host 127.0.0.1 --port 8000 --workers 4 \
+    --proxy-headers --forwarded-allow-ips=127.0.0.1 \
+    --timeout-keep-alive 30 --no-server-header
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# --- hardening. The API needs no write access outside its own tree.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/veyrs/var
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

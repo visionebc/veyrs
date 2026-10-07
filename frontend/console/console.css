@@ -1,0 +1,903 @@
+/* VEYRS Console — enterprise UI built on the brand tokens in veyrs-tokens.css.
+   Colour discipline (brand §11): neutrals carry structure, navy carries chrome,
+   VEYRS blue marks interaction, semantic colours mark meaning only. */
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--background);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+[hidden] { display: none !important; }
+
+/* ── Login ───────────────────────────────────────────────────────────── */
+.login { display: grid; grid-template-columns: 1.25fr 1fr; min-height: 100vh; }
+/* The hero is navy-dominant on purpose: it carries the full-colour lockup
+   (gradient V + white wordmark), and the bright end of the official gradient
+   (#0080FF) only reaches ~3:1 against white type. The electric blue stays as a
+   corner glow, far from the mark. */
+.login-hero {
+  position: relative; overflow: hidden; isolation: isolate;
+  background:
+    radial-gradient(900px 520px at 88% 112%, rgba(0, 128, 255, .30), transparent 62%),
+    radial-gradient(700px 420px at 6% -10%, rgba(0, 100, 216, .22), transparent 60%),
+    linear-gradient(160deg, #000B22 0%, #001030 42%, #002056 100%);
+  color: #fff;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 64px 56px; gap: 22px;
+}
+/* Faint engineering grid — texture without noise. */
+.login-hero::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, .04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(120% 100% at 20% 30%, #000 30%, transparent 78%);
+}
+/* The official gradient, used sparingly: a hairline on the seam. */
+.login-hero::after {
+  content: ""; position: absolute; inset: auto 0 0 0; height: 3px;
+  background: var(--veyrs-gradient);
+}
+/* The lockup already carries the "Unified Cybersecurity Risk Management"
+   descender, so the hero does not repeat it as a tagline. */
+.login-logo { width: 264px; max-width: 68%; margin-bottom: 6px; filter: drop-shadow(0 2px 14px rgba(0, 0, 0, .45)); }
+/* No ch caps in the hero: the copy is written to sit on a single line and the
+   column width is the only limit. A max-width here re-introduces orphan words. */
+.login-blurb { margin: 0; opacity: .68; font-size: 12px; line-height: 1.7; }
+
+/* ── VEYRS acronym key ───────────────────────────────────────────────── */
+.login-chain {
+  margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .16em;
+  text-transform: uppercase; color: #7FC0FF;
+}
+.veyrs-key { margin: 0; display: grid; gap: 12px; }
+.veyrs-key > div { display: grid; grid-template-columns: 30px 1fr; gap: 14px; align-items: start; min-width: 0; }
+.veyrs-key dt {
+  width: 30px; height: 30px; display: grid; place-items: center;
+  font-size: 14px; font-weight: 700; letter-spacing: 0; color: #fff;
+  background: rgba(255, 255, 255, .07);
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: var(--radius-sm);
+}
+.veyrs-key dd { margin: 0; }
+.veyrs-key dd b { display: block; font-size: 13.5px; font-weight: 600; color: #fff; }
+.veyrs-key dd span { display: block; font-size: 12px; line-height: 1.6; color: rgba(255, 255, 255, .70); }
+.login-panel { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px 24px; }
+.login-form { width: 100%; max-width: 360px; }
+.login-form h1 { font-size: 22px; margin: 0 0 4px; }
+.login-form label { display: block; font-size: 12px; font-weight: 600; margin: 16px 0 6px; color: var(--text-secondary); }
+.login-foot { margin-top: 28px; font-size: 12px; color: var(--text-secondary); }
+.form-error {
+  margin-top: 14px; padding: 10px 12px; border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--veyrs-danger) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--veyrs-danger) 35%, transparent);
+  color: var(--veyrs-danger); font-size: 13px;
+}
+/* Collapse to one column early: between ~860 and 1000px the two-column hero is
+   too narrow for single-line copy, which is what the ch caps used to hide. */
+@media (max-width: 1000px) {
+  .login { grid-template-columns: 1fr; }
+  .login-hero { padding: 40px 28px; gap: 18px; }
+  .veyrs-key dd span { display: none; }   /* letter + word only on narrow screens */
+  .veyrs-key { gap: 8px; }
+  .veyrs-key > div { align-items: center; }
+}
+
+/* ── Controls ────────────────────────────────────────────────────────── */
+input, select, textarea {
+  width: 100%; padding: 9px 11px; font: inherit; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: var(--focus-ring); }
+textarea { min-height: 96px; resize: vertical; font-family: var(--font-mono); font-size: 13px; }
+label.inline { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+label.inline input[type=checkbox] { width: auto; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 7px; justify-content: center;
+  padding: 8px 14px; font: inherit; font-weight: 600; cursor: pointer;
+  border-radius: var(--radius-sm); border: 1px solid var(--border);
+  background: var(--surface); color: var(--text);
+}
+.btn:hover { border-color: var(--border-strong); }
+.btn-primary { background: var(--primary); border-color: var(--primary); color: var(--primary-contrast); }
+.btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+.btn-danger { color: var(--veyrs-danger); border-color: color-mix(in srgb, var(--veyrs-danger) 40%, transparent); }
+.btn-ai { color: var(--veyrs-ai); border-color: color-mix(in srgb, var(--veyrs-ai) 40%, transparent); }
+.btn-block { width: 100%; margin-top: 22px; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-ghost {
+  background: none; border: none; color: inherit; font: inherit; cursor: pointer;
+  padding: 6px 8px; border-radius: var(--radius-sm); opacity: .8;
+}
+.btn-ghost:hover { opacity: 1; background: rgba(var(--veyrs-blue-rgb), .10); }
+.icon-btn {
+  background: none; border: 1px solid transparent; color: var(--text-secondary);
+  cursor: pointer; font-size: 16px; padding: 6px 9px; border-radius: var(--radius-sm); position: relative;
+}
+.icon-btn:hover { background: var(--surface-2); color: var(--text); }
+
+/* ── Shell ───────────────────────────────────────────────────────────── */
+.shell { display: grid; grid-template-columns: 248px 1fr; min-height: 100vh; }
+.sidebar {
+  background: var(--nav-bg); color: var(--nav-text);
+  display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
+}
+.sidebar-brand { display: flex; align-items: center; gap: 11px; padding: 18px 18px 14px; }
+.brand-mark { width: 36px; height: auto; display: block; }
+.brand-name { display: block; font-weight: 700; letter-spacing: .16em; font-size: 14px; color: #fff; }
+.brand-org { display: block; font-size: 11px; opacity: .6; }
+.nav { flex: 1; overflow-y: auto; padding: 6px 10px 20px; }
+.nav-group { margin-top: 16px; padding: 0 8px 6px; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; opacity: .45; }
+.nav a {
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px; margin-bottom: 1px;
+  border-radius: var(--radius-sm); color: var(--nav-text); font-size: 13px; text-decoration: none;
+}
+.nav a:hover { background: rgba(255,255,255,.07); text-decoration: none; }
+.nav a.active { background: var(--primary); color: var(--nav-text-active); font-weight: 600; }
+.nav .ico { width: 16px; text-align: center; opacity: .85; font-size: 13px; }
+.sidebar-foot { display: flex; gap: 4px; padding: 10px 14px; border-top: 1px solid rgba(255,255,255,.09); font-size: 12px; }
+.sidebar-foot .btn-ghost { color: var(--nav-text); }
+
+.main { display: flex; flex-direction: column; min-width: 0; }
+.topbar {
+  display: flex; align-items: center; gap: 14px; padding: 10px 20px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 20;
+}
+.search { flex: 1; max-width: 560px; }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.user-chip { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
+.badge {
+  position: absolute; top: 0; right: 0; background: var(--veyrs-danger); color: #fff;
+  font-size: 10px; line-height: 1; padding: 3px 5px; border-radius: 9px; font-weight: 700;
+}
+.only-mobile { display: none; }
+.view { padding: 22px 24px 60px; min-width: 0; }
+.loading { color: var(--text-secondary); padding: 40px 0; }
+
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { position: fixed; z-index: 40; width: 248px; transform: translateX(-100%); transition: transform .18s ease; }
+  .sidebar.open { transform: none; }
+  .only-mobile { display: inline-flex; }
+  .view { padding: 16px 14px 50px; }
+}
+
+/* ── Page furniture ──────────────────────────────────────────────────── */
+.page-head { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+.page-head h1 { font-size: 21px; margin: 0 0 3px; letter-spacing: -.01em; }
+.page-head p { margin: 0; color: var(--text-secondary); font-size: 13px; max-width: 76ch; }
+.page-actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow-sm);
+}
+.card h2 { font-size: 14px; margin: 0 0 12px; letter-spacing: .01em; }
+.card h3 { font-size: 13px; margin: 0 0 8px; color: var(--text-secondary); }
+.grid { display: grid; gap: 14px; }
+.grid.cols-2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.grid.cols-3 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.grid.cols-4 { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+/* `.grid2` is used by the asset-source and team-import forms. It was written
+   before it existed here, so those forms rendered as a single stacked column
+   -- the "oversaturated" look was a missing rule, not too much content. */
+.grid2 { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.grid2 > label { display: block; }
+.stack { display: grid; gap: 16px; }
+
+/* ── Long forms ──────────────────────────────────────────────────────────
+   A configuration screen is read once, in order, by somebody deciding. The
+   sections must be separable at a glance and the reasoning must be available
+   without being in the way -- hence a ruled section header and prose that
+   folds away, rather than a paragraph under every field. */
+.formsec { margin: 22px 0 0; padding-top: 14px; border-top: 1px solid var(--border); }
+.formsec:first-of-type { margin-top: 4px; padding-top: 0; border-top: none; }
+.formsec > h3 {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .09em;
+  color: var(--text-secondary); margin: 0 0 3px; font-weight: 700;
+}
+.formsec > .lede { margin: 0 0 12px; font-size: 12.5px; color: var(--text-secondary); max-width: 78ch; }
+.formsec > .lede:last-child { margin-bottom: 0; }
+.field { display: block; margin-bottom: 12px; }
+.field > .lbl { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; color: var(--text-secondary); }
+.field > .lbl .req { color: var(--veyrs-danger); margin-left: 2px; }
+.field > .hint { display: block; margin: 5px 0 0; font-size: 12px; color: var(--text-secondary); max-width: 78ch; }
+/* A field laid out by a grid takes its spacing from that grid's gap. Its own
+   bottom margin would add a second, unequal one -- so the gap between two rows
+   of fields would differ from the gap between two columns, which is read as
+   sloppiness rather than as the 12px it actually is. */
+.grid2 > .field, .form-grid > .field, .grid > .field { margin-bottom: 0; }
+
+/* Reasoning on demand. Closed by default: it explains a decision already made
+   for the operator, so it must not compete with the field it belongs to. */
+details.why { margin: 6px 0 0; font-size: 12px; color: var(--text-secondary); }
+details.why > summary {
+  cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 5px;
+  color: var(--primary); font-weight: 600; padding: 2px 0;
+}
+details.why > summary::-webkit-details-marker { display: none; }
+details.why > summary::before { content: '›'; display: inline-block; transition: transform .15s; }
+details.why[open] > summary::before { transform: rotate(90deg); }
+details.why > div {
+  margin-top: 6px; padding: 9px 11px; border-left: 2px solid var(--border-strong);
+  background: var(--surface-2); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; max-width: 82ch;
+}
+details.why p { margin: 0 0 7px; }
+details.why p:last-child { margin-bottom: 0; }
+
+/* Switch rows: one decision per line, not a wrapped ribbon of checkboxes. */
+.switches { display: grid; gap: 2px; margin-top: 4px; }
+.switches > label {
+  display: grid; grid-template-columns: 16px 1fr; gap: 10px; align-items: start;
+  padding: 9px 10px; border-radius: var(--radius-sm); cursor: pointer;
+}
+.switches > label:hover { background: var(--surface-2); }
+.switches > label > input[type=checkbox] { width: 16px; margin: 2px 0 0; }
+.switches .t { font-size: 13px; }
+.switches .d { display: block; font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+/* ── Check grid (field pickers) ──────────────────────────────────────────
+   19 checkboxes in a wrapping flex row read as one ragged paragraph. Fixed
+   columns inside named groups is what makes a set of this size scannable. */
+.checkgroup + .checkgroup { margin-top: 14px; }
+.checkgroup > .gh {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--text-secondary); font-weight: 700; margin-bottom: 6px;
+}
+.checkgrid { display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); }
+.checkgrid > label {
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); font-size: 12.5px; min-width: 0;
+}
+.checkgrid > label:hover { border-color: var(--border-strong); background: var(--surface-2); }
+.checkgrid > label > input[type=checkbox] { width: 15px; flex: none; }
+.checkgrid > label > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.checkgrid > label:has(input:checked) {
+  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+  background: color-mix(in srgb, var(--primary) 9%, transparent);
+}
+.pickbar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed var(--border);
+}
+.pickbar .count { font-size: 12px; color: var(--text-secondary); margin-left: auto; }
+.pickbar .count.warn { color: var(--veyrs-high); font-weight: 600; }
+
+/* Key/value editor rows: label the columns once instead of repeating the
+   placeholder in every row. */
+.kv-head {
+  display: grid; gap: 6px; margin-bottom: 5px;
+  font-size: 11px; text-transform: uppercase; letter-spacing: .07em;
+  color: var(--text-secondary); font-weight: 700;
+}
+.kv-head.two   { grid-template-columns: 1fr 1fr 34px; }
+.kv-head.three { grid-template-columns: 1fr 1fr 1fr 34px; }
+.kv-row, .vm-row { display: grid !important; gap: 6px; margin-bottom: 6px; align-items: center; }
+.kv-row { grid-template-columns: 1fr 1fr 34px; }
+.vm-row { grid-template-columns: 1fr 1fr 1fr 34px; }
+.kv-row .btn, .vm-row .btn { padding: 7px 0; }
+.kv-empty { font-size: 12px; color: var(--text-secondary); padding: 10px 0 2px; }
+@media (max-width: 700px) {
+  .kv-head { display: none; }
+  .kv-row, .vm-row { grid-template-columns: 1fr 1fr 34px; }
+}
+
+.stat { display: flex; flex-direction: column; gap: 3px; }
+.stat .label { font-size: 11px; text-transform: uppercase; letter-spacing: .09em; color: var(--text-secondary); }
+.stat .value { font-size: 27px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.stat .hint { font-size: 12px; color: var(--text-secondary); }
+.stat.crit .value { color: var(--veyrs-critical); }
+.stat.warn .value { color: var(--veyrs-high); }
+.stat.ok   .value { color: var(--veyrs-remediated); }
+
+.muted { color: var(--text-secondary); }
+.small { font-size: 12px; }
+.mono { font-family: var(--font-mono); font-size: 12.5px; }
+.right { text-align: right; }
+.nowrap { white-space: nowrap; }
+.spacer { flex: 1; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.empty { padding: 30px 12px; text-align: center; color: var(--text-secondary); font-size: 13px; }
+.empty strong { display: block; color: var(--text); font-size: 14px; margin-bottom: 4px; }
+
+/* ── Tables ──────────────────────────────────────────────────────────── */
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .07em;
+  color: var(--text-secondary); font-weight: 600; padding: 9px 12px;
+  border-bottom: 1px solid var(--border); background: var(--surface-2); white-space: nowrap;
+}
+tbody td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr.clickable { cursor: pointer; }
+tbody tr.clickable:hover { background: var(--surface-2); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ── Severity / status pills ─────────────────────────────────────────── */
+.pill {
+  display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px;
+  font-weight: 700; letter-spacing: .03em; text-transform: uppercase; white-space: nowrap;
+  border: 1px solid transparent;
+}
+.sev-critical      { background: color-mix(in srgb, var(--veyrs-critical) 13%, transparent); color: var(--veyrs-critical); border-color: color-mix(in srgb, var(--veyrs-critical) 32%, transparent); }
+.sev-high          { background: color-mix(in srgb, var(--veyrs-high) 13%, transparent); color: var(--veyrs-high); border-color: color-mix(in srgb, var(--veyrs-high) 32%, transparent); }
+.sev-medium        { background: color-mix(in srgb, var(--veyrs-medium) 13%, transparent); color: var(--veyrs-medium); border-color: color-mix(in srgb, var(--veyrs-medium) 32%, transparent); }
+.sev-low           { background: color-mix(in srgb, var(--veyrs-low) 13%, transparent); color: var(--veyrs-low); border-color: color-mix(in srgb, var(--veyrs-low) 32%, transparent); }
+.sev-informational { background: color-mix(in srgb, var(--veyrs-informational) 14%, transparent); color: var(--veyrs-informational); border-color: color-mix(in srgb, var(--veyrs-informational) 32%, transparent); }
+.sev-none          { background: var(--surface-2); color: var(--text-secondary); border-color: var(--border); }
+.st-remediated, .st-verified, .st-closed, .st-resolved { background: color-mix(in srgb, var(--veyrs-remediated) 13%, transparent); color: var(--veyrs-remediated); border-color: color-mix(in srgb, var(--veyrs-remediated) 32%, transparent); }
+.st-accepted_risk, .st-exception { background: color-mix(in srgb, var(--veyrs-accepted-risk) 13%, transparent); color: var(--veyrs-accepted-risk); border-color: color-mix(in srgb, var(--veyrs-accepted-risk) 32%, transparent); }
+.st-neutral { background: var(--surface-2); color: var(--text-secondary); border-color: var(--border); }
+/* Agent job states. A succeeded scan and a failed one must not share the grey
+   pill: the scan table is read to answer "did it actually run", and at a glance
+   colour is the only part of it anyone reads. `expired` is deliberately red
+   with `failed` -- nothing is known about whether that scan ran, so it must
+   never look like a clean result. */
+.st-succeeded { background: color-mix(in srgb, var(--veyrs-remediated) 13%, transparent); color: var(--veyrs-remediated); border-color: color-mix(in srgb, var(--veyrs-remediated) 32%, transparent); }
+/* Used since 0.27.0 by the asset-source table and the team-import preview, and
+   never defined -- so "Enabled" and "Disabled", and "create" and "unchanged",
+   rendered as the same grey pill. A status colour that is absent does not fail:
+   it agrees with everything. */
+.st-ok   { background: color-mix(in srgb, var(--veyrs-remediated) 13%, transparent); color: var(--veyrs-remediated); border-color: color-mix(in srgb, var(--veyrs-remediated) 32%, transparent); }
+.st-warn { background: color-mix(in srgb, var(--veyrs-high) 13%, transparent); color: var(--veyrs-high); border-color: color-mix(in srgb, var(--veyrs-high) 30%, transparent); }
+.st-failed, .st-expired { background: color-mix(in srgb, var(--veyrs-critical) 13%, transparent); color: var(--veyrs-critical); border-color: color-mix(in srgb, var(--veyrs-critical) 32%, transparent); }
+.st-running, .st-leased { background: color-mix(in srgb, var(--veyrs-high) 13%, transparent); color: var(--veyrs-high); border-color: color-mix(in srgb, var(--veyrs-high) 30%, transparent); }
+.pill-kev { background: var(--veyrs-critical); color: #fff; }
+.pill-ai  { background: color-mix(in srgb, var(--veyrs-ai) 14%, transparent); color: var(--veyrs-ai); border-color: color-mix(in srgb, var(--veyrs-ai) 34%, transparent); }
+.pill-net { background: color-mix(in srgb, var(--veyrs-high) 13%, transparent); color: var(--veyrs-high); border-color: color-mix(in srgb, var(--veyrs-high) 30%, transparent); }
+
+/* ── Charts ──────────────────────────────────────────────────────────────
+   House rules, applied everywhere below: thin marks on a recessive track,
+   fully rounded data ends, values as text tokens (never the series colour),
+   hairline axes one shade off the surface, and a hover title on every mark.
+   Colour is never the only encoding — every mark is labelled. */
+.bars { display: grid; gap: 9px; }
+.bar-row { display: grid; grid-template-columns: 104px 1fr 52px; align-items: center; gap: 10px; font-size: 12px; }
+.bar-label { color: var(--text-secondary); }
+/* display:flex / display:block are LOad-BEARING. A <span> fill is an inline box
+   and ignores width and height; without these the bar renders as an empty rail
+   and the panel reads as a bare number. Verified failure, not a precaution. */
+.bar-track { display: flex; background: var(--surface-2); border-radius: 999px; height: 10px; overflow: hidden; }
+.bar-fill { display: block; height: 100%; min-width: 0; border-radius: 999px; background: var(--primary); transition: width .35s ease; }
+.hist-bar, .flow-bar, .split-fill { display: block; }
+.bar-row .num, .ranked-row .num { text-align: right; font-variant-numeric: tabular-nums; color: var(--text); font-weight: 600; }
+
+/* Back-to-back comparison of two distributions over one ordinal scale. */
+.split { display: grid; gap: 10px; }
+.split-head, .split-row { display: grid; grid-template-columns: 1fr 132px 1fr; align-items: center; gap: 12px; }
+.split-head {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-secondary);
+  padding-bottom: 7px; border-bottom: 1px solid var(--border); margin-bottom: 2px;
+}
+.split-head .l { text-align: right; }
+.split-head .c { text-align: center; opacity: .7; }
+.split-side { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.split-side.l { flex-direction: row-reverse; }
+.split-track { flex: 1; min-width: 0; background: var(--surface-2); border-radius: 999px; height: 12px; display: flex; }
+.split-side.l .split-track { justify-content: flex-end; }
+.split-fill { height: 100%; border-radius: 999px; transition: width .35s ease; }
+.split-side .num { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 12.5px; min-width: 28px; }
+.split-side.l .num { text-align: left; }
+.split-mid { text-align: center; }
+.split-delta { display: block; margin-top: 3px; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+.split-delta.up { color: var(--veyrs-critical); font-weight: 700; }
+.split-delta.down { color: var(--veyrs-remediated); font-weight: 700; }
+.split-foot { margin: 12px 0 0; padding-top: 9px; border-top: 1px solid var(--border); }
+
+/* Histogram over ordered numeric bins. */
+.hist { display: flex; align-items: flex-end; gap: 3px; height: 132px; padding-top: 18px; }
+.hist-col { position: relative; flex: 1; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
+.hist-bar { width: 100%; background: var(--primary); border-radius: 4px 4px 0 0; transition: height .35s ease; }
+.hist-bar.zero { height: 2px; background: var(--surface-2); border-radius: 2px; }
+.hist-val { position: absolute; top: -16px; width: 100%; text-align: center; font-size: 10.5px; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+.hist-axis { display: flex; gap: 3px; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
+.hist-axis span { flex: 1; text-align: center; font-size: 10.5px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+/* Flow in / flow out around a zero baseline: position carries identity. */
+.flow-legend { display: flex; gap: 16px; font-size: 11.5px; color: var(--text-secondary); margin-bottom: 12px; }
+.flow-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; }
+/* One continuous hairline baseline. Drawing it per column produced a dashed
+   rule, which reads as a threshold or a projection instead of a zero line. */
+.flow { position: relative; display: flex; gap: 3px; align-items: stretch; height: 132px; }
+.flow::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--border); z-index: 0; }
+.flow-col { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.flow-up { flex: 1; display: flex; align-items: flex-end; }
+.flow-down { flex: 1; display: flex; align-items: flex-start; }
+.flow-base { height: 1px; background: transparent; }
+.flow-bar { width: 100%; transition: height .35s ease; }
+.flow-bar.up { background: var(--veyrs-high); border-radius: 4px 4px 0 0; }
+.flow-bar.down { background: var(--veyrs-remediated); border-radius: 0 0 4px 4px; }
+.flow + p .neg, .flow ~ p .neg { color: var(--veyrs-critical); }
+.flow + p .pos, .flow ~ p .pos { color: var(--veyrs-remediated); }
+
+/* Ranked list — the bar is the comparison, the row is the record. */
+.ranked { display: grid; gap: 11px; }
+.ranked-row { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(90px, 1fr) 46px; align-items: center; gap: 12px; font-size: 12.5px; }
+.ranked-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ranked-sub { display: block; font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kev-note { color: var(--veyrs-critical); }
+
+.flow-axis { display: flex; justify-content: space-between; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); font-size: 10.5px; color: var(--text-secondary); }
+
+.spark { width: 100%; height: auto; display: block; }
+.single-point { padding: 22px 0 6px; }
+.single-point .value { display: block; font-size: 30px; font-weight: 700; line-height: 1.1; }
+.single-point .hint { display: block; margin-top: 4px; font-size: 12px; color: var(--text-secondary); }
+
+@media (max-width: 640px) {
+  .split-head, .split-row { grid-template-columns: 1fr 104px 1fr; gap: 8px; }
+  .ranked-row { grid-template-columns: minmax(0, 1fr) 70px 42px; gap: 8px; }
+}
+
+/* ── Tabs ────────────────────────────────────────────────────────────── */
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 16px; overflow-x: auto; }
+.tabs button {
+  background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer;
+  padding: 9px 13px; font: inherit; font-size: 13px; color: var(--text-secondary); white-space: nowrap;
+}
+.tabs button.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+
+/* ── Filters ─────────────────────────────────────────────────────────── */
+.filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+.filters select, .filters input { width: auto; min-width: 140px; }
+.pager { display: flex; align-items: center; gap: 10px; justify-content: flex-end; margin-top: 12px; font-size: 12px; color: var(--text-secondary); }
+
+/* ── Definition lists ────────────────────────────────────────────────── */
+dl.kv { display: grid; grid-template-columns: 190px 1fr; gap: 7px 16px; margin: 0; font-size: 13px; }
+dl.kv dt { color: var(--text-secondary); }
+dl.kv dd { margin: 0; word-break: break-word; }
+@media (max-width: 620px) { dl.kv { grid-template-columns: 1fr; gap: 2px 0; } dl.kv dd { margin-bottom: 8px; } }
+
+/* ── CVSS calculator ─────────────────────────────────────────────────── */
+.cvss-layout { display: grid; grid-template-columns: 1fr 330px; gap: 16px; align-items: start; }
+@media (max-width: 1000px) { .cvss-layout { grid-template-columns: 1fr; } }
+.metric-group { margin-bottom: 18px; }
+.metric-group > h3 {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .09em;
+  border-bottom: 1px solid var(--border); padding-bottom: 6px; margin-bottom: 10px;
+}
+.metric { display: grid; grid-template-columns: 210px 1fr; gap: 10px; align-items: center; padding: 5px 0; }
+.metric-name { font-size: 13px; }
+.metric-name .abbr { color: var(--text-secondary); font-family: var(--font-mono); font-size: 11px; margin-left: 5px; }
+.opts { display: flex; flex-wrap: wrap; gap: 4px; }
+.opt {
+  padding: 4px 10px; font-size: 12px; border: 1px solid var(--border); background: var(--surface);
+  border-radius: var(--radius-sm); cursor: pointer; color: var(--text-secondary);
+}
+.opt:hover { border-color: var(--border-strong); color: var(--text); }
+.opt.on { background: var(--primary); border-color: var(--primary); color: var(--primary-contrast); font-weight: 600; }
+@media (max-width: 620px) { .metric { grid-template-columns: 1fr; gap: 4px; } }
+
+.score-panel { position: sticky; top: 74px; }
+.score-big { font-size: 52px; font-weight: 800; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.score-vector {
+  font-family: var(--font-mono); font-size: 12px; word-break: break-all;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 9px 10px; margin: 12px 0;
+}
+.score-sub { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 12px; }
+.score-sub div { background: var(--surface-2); border-radius: var(--radius-sm); padding: 7px 9px; }
+.score-sub b { display: block; font-size: 16px; font-variant-numeric: tabular-nums; }
+
+/* ── Modal ───────────────────────────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,16,48,.55); z-index: 60;
+  display: flex; align-items: flex-start; justify-content: center; padding: 6vh 16px; overflow-y: auto;
+}
+.modal {
+  background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+  width: 100%; max-width: 640px; border: 1px solid var(--border);
+}
+.modal.wide { max-width: 940px; }
+.modal-head { display: flex; align-items: center; padding: 15px 18px; border-bottom: 1px solid var(--border); }
+.modal-head h2 { margin: 0; font-size: 15px; }
+.modal-body { padding: 18px; display: grid; gap: 13px; }
+.modal-body label { font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px; }
+.modal-foot { padding: 13px 18px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ── Toasts ──────────────────────────────────────────────────────────── */
+.toast-stack { position: fixed; bottom: 18px; right: 18px; z-index: 90; display: grid; gap: 8px; max-width: 400px; }
+.toast {
+  background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--primary);
+  border-radius: var(--radius-sm); box-shadow: var(--shadow-md); padding: 11px 14px; font-size: 13px;
+}
+.toast.err { border-left-color: var(--veyrs-danger); }
+.toast.ok  { border-left-color: var(--veyrs-success); }
+
+/* ── AI panel ────────────────────────────────────────────────────────── */
+.ai-log { display: grid; gap: 12px; max-height: 56vh; overflow-y: auto; padding-right: 4px; }
+.ai-msg { padding: 11px 13px; border-radius: var(--radius); font-size: 13px; }
+.ai-msg.you { background: var(--surface-2); }
+.ai-msg.veyrs { background: color-mix(in srgb, var(--veyrs-ai) 7%, var(--surface)); border: 1px solid color-mix(in srgb, var(--veyrs-ai) 22%, transparent); }
+.ai-msg pre { white-space: pre-wrap; margin: 6px 0 0; font-family: var(--font-mono); font-size: 12px; }
+
+/* ── Team scope and bulk ownership ───────────────────────────────────── */
+/* The banner is informational, not an alarm: a narrowed view is a correct
+   state, so it must not borrow the danger colour and cry wolf. It uses the
+   brand accent and stays in the flow rather than floating, because it has to
+   be read together with the numbers underneath it. */
+.scope-banner {
+  display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap;
+  margin-bottom: 14px; padding: 10px 13px; font-size: 13px;
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  border-left: 3px solid var(--primary);
+  background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+  border-radius: var(--radius-sm); color: var(--text-secondary);
+}
+.scope-banner strong { color: var(--text); white-space: nowrap; }
+.scope-banner em { font-style: normal; font-weight: 600; color: var(--text); }
+
+/* Sticky rather than inline: a selection made at row 3 must still be
+   actionable after scrolling to row 50, or bulk assignment on a full page
+   becomes scroll-up-and-hunt. */
+.bulk-bar {
+  position: sticky; bottom: 14px; z-index: 20;
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  margin-top: 12px; padding: 10px 13px;
+  background: var(--surface); border: 1px solid var(--border-strong);
+  border-radius: var(--radius); box-shadow: var(--shadow-md);
+}
+.bulk-bar #bulk-count { margin-right: auto; font-size: 12px; color: var(--text-secondary); }
+
+th.pick, td.pick { width: 1%; padding-right: 0; }
+td.pick input, th.pick input { cursor: pointer; }
+
+.pick-list { display: grid; gap: 7px; max-height: 44vh; overflow-y: auto; padding: 2px; }
+.pick-list label.inline { display: flex; gap: 8px; align-items: center; font-weight: 400; font-size: 13px; color: var(--text); }
+
+/* Inline filter in a page head (dashboard team selector). Sits beside the
+   action buttons and matches their height so the head does not reflow. */
+.filter-inline { display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--text-secondary); }
+.filter-inline select { text-transform: none; letter-spacing: 0; font-size: 13px;
+  padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); min-width: 190px; }
+
+/* ══ Notion-inspired reskin (2026-08-23) ══════════════════════════════════
+   The chrome moves from "branded corporate" to "quiet workspace": white
+   canvas, warm-grey sidebar with dark text, hairline borders, no card
+   shadows, softer radii. VEYRS blue survives ONLY as the interaction accent
+   (buttons, links, focus) and severity colours are untouched — meaning must
+   not restyle. Scoped to [data-theme="light"] so the dark theme keeps the
+   original token set; boot() now always sets the attribute explicitly. */
+[data-theme="light"] {
+  --background:      #FFFFFF;
+  --surface:         #FFFFFF;
+  --surface-2:       #F7F7F5;
+  --border:          #E9E9E7;
+  --border-strong:   #D3D1CB;
+  --text:            #191919;
+  --text-secondary:  #787774;
+  --nav-bg:          #F7F7F5;
+  --nav-text:        #5F5E5B;
+  --nav-text-active: #191919;
+  --radius-sm: 6px;
+  --radius:    8px;
+  --radius-lg: 12px;
+  --shadow-sm: none;
+  --shadow-md: 0 1px 4px rgba(15, 15, 15, .06);
+  --shadow-lg: 0 10px 28px rgba(15, 15, 15, .12);
+}
+
+/* The sidebar is no longer navy, so everything that assumed light-on-dark
+   inside it flips to dark-on-light. */
+[data-theme="light"] .sidebar { border-right: 1px solid var(--border); }
+[data-theme="light"] .brand-name { color: var(--text); }
+[data-theme="light"] .brand-org { color: var(--text-secondary); opacity: 1; }
+[data-theme="light"] .nav a:hover { background: rgba(15, 15, 15, .045); }
+/* Notion's active state is a quiet grey, not a filled blue bar. */
+[data-theme="light"] .nav a.active { background: rgba(15, 15, 15, .07); color: var(--text); }
+[data-theme="light"] .nav-group { opacity: .6; }
+[data-theme="light"] .sidebar-foot { border-top: 1px solid var(--border); }
+[data-theme="light"] .btn-ghost:hover { background: rgba(15, 15, 15, .05); }
+
+/* Topbar dissolves into the canvas; the search field is a soft block that
+   sharpens on focus, the way Notion's quick-find does. */
+[data-theme="light"] .topbar { background: var(--background); }
+[data-theme="light"] .search input {
+  background: var(--surface-2); border-color: transparent;
+}
+[data-theme="light"] .search input:focus {
+  background: var(--surface); border-color: var(--primary);
+}
+
+/* Tables: plain headers, no tinted band. */
+[data-theme="light"] thead th { background: transparent; }
+
+/* Tabs underline in ink, not accent — the accent is for actions. */
+[data-theme="light"] .tabs button.active { color: var(--text); border-bottom-color: var(--text); }
+
+/* ── Getting Started (pipeline guide) ────────────────────────────────── */
+.guide-chain {
+  display: flex; align-items: stretch; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 16px; padding: 18px;
+}
+.chain-node {
+  flex: 1; min-width: 150px; display: flex; flex-direction: column; gap: 2px;
+  padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.chain-node b { font-size: 15px; }
+.chain-step {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .12em;
+  color: var(--text-secondary); font-weight: 700;
+}
+.chain-sub { font-size: 12px; color: var(--text-secondary); }
+.chain-arrow { align-self: center; color: var(--text-secondary); font-size: 18px; }
+.guide-steps { margin-top: 2px; }
+.step-card { position: relative; padding-top: 20px; }
+.step-num {
+  position: absolute; top: 14px; right: 14px; width: 28px; height: 28px;
+  display: grid; place-items: center; font-weight: 700; font-size: 14px;
+  border-radius: 999px; background: var(--surface-2); color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.guide-list { margin: 8px 0 12px; padding-left: 18px; display: grid; gap: 6px; }
+@media (max-width: 900px) {
+  .guide-chain { flex-direction: column; }
+  .chain-arrow { transform: rotate(90deg); align-self: flex-start; margin-left: 22px; }
+}
+
+
+/* ══ Sidebar: collapsible groups, sub-items and icon rail (2026-08-23) ══
+   `.nav-group` became a <button>, so it needs the full button reset here;
+   the earlier `.nav-group` rule above still supplies the type scale. */
+.nav-sec { margin-top: 14px; }
+.nav-sec:first-child { margin-top: 4px; }
+.nav-group {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; margin: 0; padding: 0 8px 6px;
+  background: none; border: 0; cursor: pointer;
+  font: inherit; font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--nav-text); opacity: .45;
+}
+.nav-group:hover { opacity: .85; }
+.nav-caret { font-size: 9px; line-height: 1; opacity: .65; padding: 0 2px; }
+.nav a .nav-caret { margin-left: auto; cursor: pointer; padding: 4px; margin-right: -4px; }
+.nav a .nav-caret:hover { opacity: 1; }
+.nav-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-sub { margin: 1px 0 5px 25px; padding-left: 9px; border-left: 1px solid rgba(255,255,255,.12); }
+.nav a.nav-subitem { padding: 5px 9px; font-size: 12.5px; opacity: .82; }
+.nav a.nav-subitem:hover { opacity: 1; }
+.nav a.nav-subitem.active { background: rgba(255,255,255,.13); color: var(--nav-text-active); font-weight: 600; opacity: 1; }
+#rail-btn { margin-left: auto; padding: 4px 7px; font-size: 13px; color: var(--nav-text); }
+
+[data-theme="light"] .nav-group { color: var(--text-secondary); opacity: .55; }
+[data-theme="light"] .nav-sub { border-left-color: var(--border-strong); }
+[data-theme="light"] .nav a.nav-subitem.active { background: rgba(15, 15, 15, .07); color: var(--text); }
+
+@media (min-width: 901px) {
+  .shell.rail { grid-template-columns: 68px 1fr; }
+  .shell.rail .brand-text,
+  .shell.rail .nav-label,
+  .shell.rail .nav-caret,
+  .shell.rail .nav-group-label,
+  .shell.rail .nav-sub,
+  .shell.rail .rail-hide { display: none; }
+  .shell.rail .sidebar-brand { justify-content: center; padding: 16px 0 12px; }
+  .shell.rail .nav { padding: 6px 8px 20px; }
+  .shell.rail .nav a { justify-content: center; padding: 9px 0; }
+  .shell.rail .nav .ico { font-size: 15px; width: auto; }
+  /* With its label hidden the group header becomes a hairline separator --
+     collapsing the sidebar should not leave six empty rows behind. */
+  .shell.rail .nav-group {
+    height: 1px; padding: 0; margin: 12px 6px 8px; overflow: hidden;
+    background: rgba(255,255,255,.14); cursor: default;
+  }
+  [data-theme="light"] .shell.rail .nav-group { background: var(--border); }
+  .shell.rail .sidebar-foot { flex-direction: column; align-items: center; gap: 2px; }
+}
+@media (max-width: 900px) { #rail-btn { display: none; } }
+
+/* ── Explainers ──────────────────────────────────────────────────────────
+   The collapsible "what is this page for" panel every configuration screen
+   now carries. Deliberately quiet: it sits above the working area and must
+   read as annotation, not as an alert. A yellow banner on a settings page
+   trains people to dismiss yellow banners. */
+.explainer {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.explainer-head {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 10px 14px; background: none; border: 0; cursor: pointer;
+  font: inherit; color: var(--text); text-align: left;
+}
+.explainer-head:hover { background: rgba(127, 127, 127, .06); }
+.explainer-ico {
+  flex: 0 0 auto; width: 18px; height: 18px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--primary); color: #fff; font-size: 11px; font-weight: 700;
+}
+.explainer-title { flex: 1 1 auto; font-weight: 600; font-size: 13px; }
+.explainer-caret { flex: 0 0 auto; color: var(--text-secondary); font-size: 11px; }
+.explainer-body { padding: 2px 14px 14px 42px; }
+.explainer-body dl { margin: 0; display: grid; grid-template-columns: 190px 1fr; gap: 6px 16px; }
+.explainer-body dt {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--text-secondary); padding-top: 1px;
+}
+.explainer-body dd { margin: 0; font-size: 13px; }
+.explainer-body dd code, .explainer-body dd .mono { font-size: 12px; }
+.explainer-warn {
+  margin: 12px 0 0; padding: 8px 11px; font-size: 13px;
+  border-left: 3px solid var(--warning, #C2841A);
+  background: rgba(194, 132, 26, .09); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+@media (max-width: 760px) {
+  .explainer-body { padding-left: 14px; }
+  .explainer-body dl { grid-template-columns: 1fr; gap: 2px; }
+  .explainer-body dt { padding-top: 8px; }
+}
+
+/* ── Provenance chips (CVSS bulletin assistant) ──────────────────────────
+   Which half of a prefilled form the analyst is actually reviewing. The
+   distinction is the whole point of the feature, so it is a visible mark on
+   the field rather than a footnote under the form. */
+.prov { font-size: 10px; text-transform: uppercase; letter-spacing: .05em;
+        padding: 1px 5px; border-radius: 3px; margin-left: 6px; vertical-align: middle; }
+.prov-bulletin { background: rgba(16, 132, 74, .14); color: #10844A; }
+.prov-model    { background: rgba(0, 128, 255, .13); color: var(--primary); }
+.prov-you      { background: rgba(127, 127, 127, .16); color: var(--text-secondary); }
+
+/* ── Guided workflow builder ─────────────────────────────────────────── */
+.wf-step {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 14px; margin-bottom: 10px; background: var(--surface);
+}
+.wf-step-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.wf-step-head strong { flex: 1 1 auto; }
+.wf-step-num {
+  width: 20px; height: 20px; border-radius: 50%; background: var(--surface-2);
+  border: 1px solid var(--border); display: inline-flex; align-items: center;
+  justify-content: center; font-size: 11px; color: var(--text-secondary);
+}
+.wf-step .field-help { font-size: 12px; color: var(--text-secondary); margin: 2px 0 8px; }
+
+/* ══ v0.22.0 — triage, saved views, command palette ═══════════════════ */
+
+.section-h { font-size: 14px; margin: 18px 0 10px; letter-spacing: .01em; }
+.row-between { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.pre-wrap { white-space: pre-wrap; word-break: break-word; }
+label.check { display: flex; align-items: center; gap: 8px; font-weight: 400; }
+label.check input { width: auto; margin: 0; }
+.form-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); align-items: end; }
+.form-actions { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
+kbd {
+  font: 600 11px/1 var(--font-mono, ui-monospace, monospace);
+  padding: 3px 5px; border: 1px solid var(--border); border-bottom-width: 2px;
+  border-radius: 4px; background: var(--surface-2, var(--surface)); color: var(--text-secondary);
+}
+
+/* Empty state that says which of the two empties this is. */
+.not-configured {
+  border: 1px dashed var(--border); border-radius: 12px; padding: 28px 24px;
+  text-align: left; color: var(--text-secondary); background: var(--surface);
+}
+.not-configured strong { display: block; font-size: 15px; color: var(--text); margin-bottom: 6px; }
+.not-configured p { margin: 0 0 10px; }
+.nc-steps { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 13px; }
+
+/* Saved-view chips. */
+.view-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
+.chip {
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary);
+  border-radius: 999px; padding: 5px 12px; font-size: 12px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.chip:hover { color: var(--text); border-color: var(--text-secondary); }
+.chip-on { background: var(--primary); border-color: var(--primary); color: #fff; }
+.chip-tag { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; opacity: .7; }
+
+/* Triage. */
+.triage-bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 0 0 12px; flex-wrap: wrap; }
+.tabs.tabs-inline { display: flex; gap: 4px; flex-wrap: wrap; border: 0; }
+.tabs.tabs-inline a {
+  padding: 6px 12px; border-radius: 8px; font-size: 13px; text-decoration: none;
+  color: var(--text-secondary); border: 1px solid transparent;
+}
+.tabs.tabs-inline a:hover { color: var(--text); border-color: var(--border); }
+.tabs.tabs-inline a.active { color: var(--text); background: var(--surface); border-color: var(--border); font-weight: 600; }
+
+.triage-card {
+  border: 1px solid var(--border); border-radius: 14px; background: var(--surface);
+  padding: 22px 24px; max-width: 900px;
+}
+.triage-head { display: flex; gap: 18px; justify-content: space-between; align-items: flex-start; }
+.triage-head h2 { margin: 6px 0 4px; font-size: 19px; line-height: 1.3; }
+.triage-pills { margin: 0; display: flex; gap: 6px; flex-wrap: wrap; }
+.triage-score { text-align: right; flex: 0 0 auto; }
+.triage-score-n { display: block; font-size: 34px; font-weight: 700; line-height: 1; }
+.triage-facts {
+  display: grid; gap: 10px 22px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  margin: 18px 0; padding: 16px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+}
+.triage-facts dt { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-secondary); }
+.triage-facts dd { margin: 3px 0 0; font-size: 13px; }
+.triage-why { margin: 0 0 14px; font-size: 13px; }
+.triage-why ul { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 4px; }
+.triage-fix { margin: 0 0 16px; font-size: 13px; }
+.triage-fix h3 { margin: 0 0 4px; }
+.triage-actions { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 16px; border-top: 1px solid var(--border); }
+.triage-actions kbd { margin-right: 6px; }
+.triage-empty { max-width: 900px; }
+
+/* Command palette. */
+.pal-backdrop {
+  position: fixed; inset: 0; z-index: 90; background: rgba(8, 13, 26, .55);
+  display: flex; align-items: flex-start; justify-content: center; padding: 12vh 16px 16px;
+  backdrop-filter: blur(2px);
+}
+.pal {
+  width: min(680px, 100%); background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; box-shadow: 0 24px 60px rgba(0, 0, 0, .35); overflow: hidden;
+  display: flex; flex-direction: column; max-height: 70vh;
+}
+.pal input {
+  border: 0; border-bottom: 1px solid var(--border); border-radius: 0; margin: 0;
+  padding: 16px 18px; font-size: 15px; background: transparent; color: var(--text); width: 100%;
+}
+.pal input:focus { outline: none; }
+.pal-list { list-style: none; margin: 0; padding: 6px; overflow: auto; flex: 1; }
+.pal-row {
+  display: grid; grid-template-columns: 96px 1fr auto; gap: 12px; align-items: baseline;
+  padding: 9px 12px; border-radius: 8px; cursor: pointer; font-size: 13px;
+}
+.pal-row.on { background: var(--primary); color: #fff; }
+.pal-row.on .pal-kind, .pal-row.on .pal-sub { color: rgba(255, 255, 255, .8); }
+.pal-kind { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-secondary); }
+.pal-label { font-weight: 500; }
+.pal-sub { font-size: 12px; color: var(--text-secondary); text-align: right; }
+.pal-none { padding: 22px 14px; color: var(--text-secondary); font-size: 13px; text-align: center; }
+.pal-foot { padding: 8px 14px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-secondary); display: flex; gap: 6px; align-items: center; }
+
+/* ── Risk 5×5 heat map ("How a risk is scored") ────────────────────────
+   The cells carry the SAME `.sev-*` classes as the band pills drawn on the
+   register's list, so the map cannot come to disagree with the colour a
+   risk is actually filed under.
+
+   That reuse is exactly why `.rm-cell` sets border-WIDTH and border-STYLE
+   but never `background`, `color` or `border-color`: those three arrive
+   from `.sev-*`, which sits EARLIER in this file at the same specificity,
+   so a shorthand `border:` here would win on source order and flatten the
+   whole map to one colour -- the map would render, and be wrong.          */
+.rm-wrap { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: center; }
+.rm-side {
+  font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--text-secondary);
+  writing-mode: vertical-rl; transform: rotate(180deg); justify-self: center;
+}
+.rm-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+.rm-cell {
+  border-width: 1px; border-style: solid; border-radius: var(--radius-sm);
+  padding: 7px 4px; min-height: 46px; text-align: center;
+  display: grid; gap: 1px; align-content: center;
+}
+.rm-head {
+  background: var(--surface-2); border-color: var(--border);
+  color: var(--text-secondary); font-size: 13px; font-weight: 700;
+}
+.rm-corner { font-weight: 600; }
+.rm-axis { font-size: 10px; letter-spacing: .04em; white-space: nowrap; }
+.rm-n { font-size: 15px; font-weight: 700; line-height: 1.15; }
+.rm-b { font-size: 10px; text-transform: capitalize; opacity: .85; }
+.rm-foot { text-align: center; margin: 7px 0 0; font-weight: 600; }
+.rm-bands { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0 0 7px; }

@@ -1,0 +1,22 @@
+[Unit]
+Description=VEYRS daily digest tick
+Documentation=file:/opt/veyrs/scripts/send-digest.sh
+After=network-online.target veyrs-api.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/veyrs/scripts/send-digest.sh
+# Bounded on purpose, unlike veyrs-intel-sync: this reads a handful of counts
+# per recipient and hands them to SMTP. A digest run that has not finished in
+# ten minutes is stuck on a transport, and the notification rows it already
+# wrote are retried by the next tick -- nothing is lost by killing it.
+TimeoutStartSec=600
+User=root
+OOMPolicy=continue
+WorkingDirectory=/opt/veyrs/backend
+Nice=10
+IOSchedulingClass=idle
+
+[Install]
+WantedBy=multi-user.target

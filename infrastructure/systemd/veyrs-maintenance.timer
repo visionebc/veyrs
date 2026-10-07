@@ -1,0 +1,9 @@
+[Unit]
+Description=VEYRS scheduled maintenance (SLA evaluation, feed sync, stale controls)
+
+[Timer]
+OnCalendar=*-*-* *:15:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
