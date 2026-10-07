@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 64" width="360" height="64"
+     role="img" aria-label="VEYRS - Unified Cybersecurity Risk Management">
+  <title>VEYRS</title>
+  <g transform="translate(3 4) scale(0.87)">
+    <path d="M32 3.5 L56.5 12.5 V32.5 C56.5 45.8 46.2 55.9 32 60.5 C17.8 55.9 7.5 45.8 7.5 32.5 V12.5 Z" fill="#FFFFFF"/>
+    <path d="M17.6 18.6 H25.6 L32 36.4 L38.4 18.6 H46.4 L35.6 47.6 H28.4 Z" fill="#001030"/>
+  </g>
+  <text x="66" y="34" font-family="Inter, 'Segoe UI', system-ui, sans-serif"
+        font-size="26" font-weight="700" letter-spacing="4.6" fill="#FFFFFF">VEYRS</text>
+  <text x="66" y="48" font-family="Inter, 'Segoe UI', system-ui, sans-serif"
+        font-size="8.6" font-weight="500" letter-spacing="1.42" fill="#A0B0C8">UNIFIED CYBERSECURITY RISK MANAGEMENT</text>
+</svg>

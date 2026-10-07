@@ -1,0 +1,20 @@
+[Unit]
+Description=VEYRS intelligence feed sync (NVD + EPSS + KEV)
+Documentation=file:/opt/veyrs/scripts/sync-intel.sh
+After=network-online.target veyrs-api.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/veyrs/scripts/sync-intel.sh
+# NVD is rate-limited to 5 requests / 30 s without an API key, so a day with a
+# large lastModified delta legitimately takes hours. A timeout here would kill
+# a healthy run mid-corpus; the feed's own retry/backoff is the real guard.
+TimeoutStartSec=infinity
+User=root
+WorkingDirectory=/opt/veyrs/backend
+Nice=10
+IOSchedulingClass=idle
+
+[Install]
+WantedBy=multi-user.target

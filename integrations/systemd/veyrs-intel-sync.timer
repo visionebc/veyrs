@@ -1,0 +1,14 @@
+[Unit]
+Description=Daily VEYRS intelligence refresh
+Documentation=file:/opt/veyrs/scripts/sync-intel.sh
+
+[Timer]
+# 03:30 local, with jitter: NVD's rate limit is per source address and a fleet
+# of installations all firing on the hour is how a shared limit gets exhausted.
+OnCalendar=*-*-* 03:30:00
+RandomizedDelaySec=1800
+# A host that was off at 03:30 still needs today's KEV.
+Persistent=true
+
+[Install]
+WantedBy=timers.target
