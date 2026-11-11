@@ -1,0 +1,10 @@
+[Unit]
+Description=Check every 15 minutes that veyrs-db-2 is really replicating
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=15min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

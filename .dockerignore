@@ -1,0 +1,31 @@
+# Build-context exclusions. docker/Dockerfile copies only named directories, so
+# nothing here is load-bearing on its own -- this is the second line of defence,
+# for the day someone adds a `COPY . .` in a hurry.
+#
+# The first four entries are the reason this file exists: the working tree of a
+# running node carries the live VEYRS_SECRET_KEY, the live Fernet key and a
+# production database dump. An image layer is additive and immutable, so a
+# secret copied in once cannot be removed by a later RUN rm -- it ships with the
+# image to everyone it is shared with.
+#
+# The patterns are `**/`-prefixed on purpose. A bare `.env` matches ONLY the
+# context root -- docker/.env, which veyrs-docker.sh writes and which carries
+# the stack's signing key, Fernet key and admin password, would sail straight
+# past it. Found by trying to write the mutation test for this file and
+# discovering it could not be made to bite.
+**/.env
+**/.env.*
+!**/.env.example
+**/.bootstrap-credentials
+var/
+
+# Never useful in an image, and `venv/` alone is ~400 MB of host-linked
+# binaries that would be uploaded to the daemon on every single build.
+venv/
+.git/
+.pytest_cache/
+**/__pycache__/
+**/*.pyc
+node_modules/
+*.dump
+*.sql.gz

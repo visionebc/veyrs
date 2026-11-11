@@ -1,0 +1,16 @@
+[Unit]
+Description=VEYRS logical database backup (pg_dump + off-host copy)
+Documentation=https://veyrs-docs.example.com/DISASTER_RECOVERY.html
+After=postgresql.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/veyrs-pgdump.sh
+# The dump competes with nothing at 02:15, but be a good neighbour anyway.
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=3600
+# A dump is not worth taking the database node down for.
+MemoryMax=2G
+OOMPolicy=continue

@@ -1,0 +1,20 @@
+[Unit]
+Description=VEYRS self-update (applies one queued request: verify, back up, install, health-check)
+Documentation=file:///opt/veyrs/docs/DEPLOYMENT.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Root on purpose, and the ONLY root part of the update: the API that asked is
+# sandboxed (ProtectSystem=strict) and cannot write the tree it runs from.
+User=root
+WorkingDirectory=/
+EnvironmentFile=-/opt/veyrs/.env
+ExecStart=/opt/veyrs/scripts/veyrs-updater.sh
+# Download + backup hook + install.sh + health check. A large database dump in
+# the hook dominates; the updater bounds each step itself.
+TimeoutStartSec=3h
+PrivateTmp=yes
+# No NoNewPrivileges=: install.sh drops to the postgres account with su(1) and
+# runs the package manager; neither belongs in a no-new-privileges sandbox.

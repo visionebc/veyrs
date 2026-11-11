@@ -1,0 +1,14 @@
+[Unit]
+Description=VEYRS update requests (starts the root updater when the console queues one)
+Documentation=file:///opt/veyrs/docs/DEPLOYMENT.md
+
+[Path]
+# The API writes request-*.json here (via a dot-named temp file, so a half
+# written request never matches). Keep in sync with VEYRS_UPDATE_SPOOL.
+PathExistsGlob=/var/lib/veyrs/update-requests/*.json
+MakeDirectory=yes
+DirectoryMode=0700
+Unit=veyrs-updater.service
+
+[Install]
+WantedBy=multi-user.target

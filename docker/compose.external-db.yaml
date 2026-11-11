@@ -1,0 +1,102 @@
+# VEYRS — overlay: PostgreSQL OUTSIDE this stack.
+#
+# Enabled by naming it in docker/.env, never by hand on one command line:
+#
+#     VEYRS_COMPOSE_OVERLAYS=compose.external-db.yaml
+#
+# veyrs-docker.sh reads that variable and passes this file to EVERY verb --
+# up, down, ps, logs, psql -- so no command describes a different stack from
+# the one that is running. veyrs-setup.sh writes all of the variables below.
+#
+# Variables (docker/.env):
+#
+#   VEYRS_EXT_DATABASE_URL  postgresql+psycopg://USER:PASSWORD@HOST:PORT/DB, with
+#                           USER and PASSWORD percent-encoded. A password with
+#                           `@`, `:` or `/` in it breaks a URL written by hand,
+#                           which is why the base file's URL is not reused.
+#   VEYRS_EXT_DB_HOST       the server, as seen FROM A CONTAINER. `localhost`
+#                           is the container itself; for a PostgreSQL on the
+#                           Docker host use host.docker.internal (mapped below).
+#   VEYRS_EXT_DB_PORT       default 5432
+#   VEYRS_DB_USER / VEYRS_DB_PASSWORD / VEYRS_DB_NAME
+#                           the external role and database, as in the base file.
+#
+# ===========================================================================
+# THE ROLE MUST NOT BE A SUPERUSER, AND MUST NOT HAVE BYPASSRLS.
+# ===========================================================================
+# 70 of VEYRS' 87 tables carry FORCE ROW LEVEL SECURITY; it is what keeps one
+# tenant's data from another. A superuser or a BYPASSRLS role skips every one
+# of those policies silently -- nothing errors, nothing logs. The bundled
+# stack avoids that by construction (initdb.d/10-app-role.sh); with an
+# external server it is the operator's role, so veyrs-setup.sh checks
+# rolsuper/rolbypassrls through this stack's own network path and refuses to
+# continue. Create the role like this, as the server's superuser:
+#
+#   CREATE ROLE veyrs LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS
+#       PASSWORD '...';
+#   CREATE DATABASE veyrs OWNER veyrs ENCODING 'UTF8' TEMPLATE template0;
+#
+# OWNER, because init-db issues ALTER TABLE ... FORCE ROW LEVEL SECURITY and
+# CREATE POLICY, which only the owner may do. UTF8, because advisories arrive
+# in five languages. pg_hba.conf must admit this stack's subnet (VEYRS_SUBNET,
+# default 172.29.0.0/16) with a password method.
+#
+# ===========================================================================
+# WHY `postgres` IS STILL A SERVICE
+# ===========================================================================
+# Removing a service from an overlay needs `!reset`, i.e. Compose >= 2.24.4,
+# and openSUSE Leap 15.6 ships 2.22. So the service stays and stops being a
+# database: it runs no cluster, and its health check is a real login into the
+# EXTERNAL database as the application role. `init` keeps depending on it being
+# healthy, so the start-up order still means "the database accepts us" -- the
+# same guarantee the bundled stack gives, now about the server that matters.
+# Its data volume is still declared by the base file and simply stays empty.
+# ===========================================================================
+
+x-external-hosts: &external-hosts
+  # host-gateway = the Docker host's address on the default bridge, so that a
+  # PostgreSQL on this machine is reachable as host.docker.internal.
+  - "host.docker.internal:host-gateway"
+
+services:
+  postgres:
+    entrypoint: ["sleep", "infinity"]
+    # sleep ignores SIGTERM as PID 1; there is nothing to flush.
+    stop_grace_period: 1s
+    environment:
+      VEYRS_EXT_DB_HOST: ${VEYRS_EXT_DB_HOST:?VEYRS_EXT_DB_HOST is required with compose.external-db.yaml}
+      VEYRS_EXT_DB_PORT: ${VEYRS_EXT_DB_PORT:-5432}
+    extra_hosts: *external-hosts
+    healthcheck:
+      # A real login as the APPLICATION role into the EXTERNAL database -- the
+      # same contract as the bundled health check, pointed at the real server.
+      test: ["CMD-SHELL", "PGPASSWORD=$$VEYRS_DB_PASSWORD psql -h \"$$VEYRS_EXT_DB_HOST\" -p \"$$VEYRS_EXT_DB_PORT\" -U \"$$VEYRS_DB_USER\" -d \"$$VEYRS_DB_NAME\" -c 'SELECT 1' >/dev/null 2>&1"]
+
+  init:
+    environment:
+      VEYRS_DATABASE_URL: ${VEYRS_EXT_DATABASE_URL:?VEYRS_EXT_DATABASE_URL is required with compose.external-db.yaml}
+      # init.sh reads `users` to decide whether the administrator exists. The
+      # base file hands it the bundled cluster's superuser; here there is none.
+      # The application role can answer that question: `users` is one of the
+      # credential-keyed tables whose policy is permissive while no tenant is
+      # bound (cli.RLS_TABLES_PREAUTH) -- the same property login relies on.
+      VEYRS_DB_HOST: ${VEYRS_EXT_DB_HOST:?VEYRS_EXT_DB_HOST is required}
+      VEYRS_DB_PORT: ${VEYRS_EXT_DB_PORT:-5432}
+      VEYRS_DB_SUPERUSER: ${VEYRS_DB_USER:-veyrs}
+      VEYRS_DB_SUPERUSER_PASSWORD: ${VEYRS_DB_PASSWORD:?VEYRS_DB_PASSWORD is required}
+    extra_hosts: *external-hosts
+
+  api:
+    environment:
+      VEYRS_DATABASE_URL: ${VEYRS_EXT_DATABASE_URL:?VEYRS_EXT_DATABASE_URL is required}
+    extra_hosts: *external-hosts
+
+  intel:
+    environment:
+      VEYRS_DATABASE_URL: ${VEYRS_EXT_DATABASE_URL:?VEYRS_EXT_DATABASE_URL is required}
+    extra_hosts: *external-hosts
+
+  digest:
+    environment:
+      VEYRS_DATABASE_URL: ${VEYRS_EXT_DATABASE_URL:?VEYRS_EXT_DATABASE_URL is required}
+    extra_hosts: *external-hosts

@@ -1,0 +1,9 @@
+[Unit]
+Description=VEYRS scheduled maintenance run
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/veyrs
+EnvironmentFile=/opt/veyrs/.env
+Environment=PYTHONPATH=/opt/veyrs/backend
+ExecStart=/opt/veyrs/venv/bin/python -m veyrs.cli run-sla

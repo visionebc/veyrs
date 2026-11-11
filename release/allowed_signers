@@ -1,0 +1,13 @@
+# VEYRS release signing key (OpenSSH allowed_signers format, ssh-keygen(1) -Y).
+#
+# This is the trust anchor for every release: SHA256SUMS.sig is verified against
+# the key below, and SHA256SUMS then vouches for each asset. A copy of this file
+# is EMBEDDED in veyrs-setup.sh (that script is downloaded on its own, so a key
+# fetched from the same release would prove nothing); tests/test_phase52_release_signing.py
+# fails if the two copies differ.
+#
+# Key in use since 0.33.0 (ed25519, generated 2026-10-26). Consumers
+# (scripts/verify-release.sh, veyrs-setup.sh, scripts/veyrs-updater.sh) accept
+# only signatures made with it. A line still reading PLACEHOLDER would be
+# treated as "no trusted key, cannot verify" -- never as success.
+release@veyrs namespaces="veyrs-release" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINm+qaFLb1+MYsL0s4dwJjwemA0wfhrM1CGaf7Bzu3vQ

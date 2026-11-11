@@ -1,0 +1,11 @@
+[Unit]
+Description=VEYRS backup restore verification (restores the latest dump and counts rows)
+After=postgresql.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/veyrs-pgverify.sh
+Nice=15
+IOSchedulingClass=idle
+TimeoutStartSec=5400
+OOMPolicy=continue

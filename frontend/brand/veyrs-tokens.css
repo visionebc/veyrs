@@ -1,0 +1,194 @@
+/* ==========================================================================
+   VEYRS — Corporate brand tokens
+   Unified Cybersecurity Risk Management
+
+   Single source of truth for colour across the whole ecosystem: web app,
+   documentation site, reports, PDF exports, emails, mobile and desktop.
+   Nothing in VEYRS may hard-code a hex value — reference a token.
+
+   Usage ratio the design system enforces (section 11 of the brand spec):
+     60% neutral / structure · 20% deep navy / dark corporate
+     15% VEYRS blue · 5% accent + semantic
+   Blue signals identity and interaction. It is NOT a severity colour.
+   ========================================================================== */
+
+:root {
+  /* --- 1. primary brand ------------------------------------------------ */
+  --veyrs-blue:            #0064D8;   /* primary: buttons, active nav, links */
+  --veyrs-blue-rgb:        0, 100, 216;
+  --veyrs-electric:        #0080FF;   /* accent: hover, focus, highlights   */
+  --veyrs-electric-rgb:    0, 128, 255;
+
+  /* --- 2. dark corporate ---------------------------------------------- */
+  --veyrs-navy:            #001030;   /* logo, headers, sidebar             */
+  --veyrs-navy-security:   #002060;   /* dark surfaces, cards, gradients    */
+
+  /* --- 3. metallic / enterprise --------------------------------------- */
+  --veyrs-steel:           #7080A0;   /* secondary icons, borders, metadata */
+  --veyrs-steel-light:     #A0B0C8;   /* secondary text, disabled states    */
+
+  /* --- 4. light UI ---------------------------------------------------- */
+  --veyrs-white:           #FFFFFF;
+  --veyrs-bg:              #F5F7FA;   /* application background             */
+  --veyrs-border:          #D9E0EA;
+  --veyrs-text:            #0B1220;
+  --veyrs-text-secondary:  #526070;
+
+  /* --- 7/8. severity + status (independent of brand blue) -------------- */
+  --veyrs-critical:        #B91C1C;
+  --veyrs-high:            #EA580C;
+  --veyrs-medium:          #D97706;
+  --veyrs-low:             #2563EB;
+  --veyrs-informational:   #64748B;
+  --veyrs-remediated:      #15803D;
+  --veyrs-accepted-risk:   #7C3AED;
+
+  --veyrs-success:         #15803D;
+  --veyrs-warning:         #D97706;
+  --veyrs-danger:          #B91C1C;
+  --veyrs-info:            #2563EB;
+  --veyrs-neutral:         #64748B;
+
+  /* --- 9. AI ---------------------------------------------------------- */
+  --veyrs-ai:              #7C3AED;
+
+  /* --- 6. official gradient (use sparingly) --------------------------- */
+  --veyrs-gradient: linear-gradient(135deg, #001030 0%, #0064D8 55%, #0080FF 100%);
+
+  /* --- semantic aliases: what components actually reference ----------- */
+  --surface:               var(--veyrs-white);
+  --surface-2:             #EDF1F7;
+  --surface-raised:        var(--veyrs-white);
+  --background:            var(--veyrs-bg);
+  --border:                var(--veyrs-border);
+  --border-strong:         #C2CDDB;
+  --text:                  var(--veyrs-text);
+  --text-secondary:        var(--veyrs-text-secondary);
+  --text-inverse:          var(--veyrs-white);
+  --primary:               var(--veyrs-blue);
+  --primary-hover:         var(--veyrs-electric);
+  --primary-contrast:      var(--veyrs-white);
+  --nav-bg:                var(--veyrs-navy);
+  --nav-text:              #C9D6E8;
+  --nav-text-active:       var(--veyrs-white);
+  --focus-ring:            var(--veyrs-electric);
+
+  /* subtle shadows only — the brand spec forbids glow effects */
+  --shadow-sm: 0 1px 2px rgba(11, 18, 32, 0.06);
+  --shadow-md: 0 2px 8px rgba(11, 18, 32, 0.08);
+  --shadow-lg: 0 8px 24px rgba(11, 18, 32, 0.10);
+
+  /* structure: dense but readable data tables, clean grids */
+  --radius-sm: 3px;
+  --radius:    5px;
+  --radius-lg: 8px;      /* deliberately restrained: no pill-shaped cards */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px;
+  --space-4: 16px; --space-5: 24px; --space-6: 32px; --space-8: 48px;
+
+  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  --text-xs: 11px; --text-sm: 12.5px; --text-base: 14px;
+  --text-lg: 16px; --text-xl: 20px; --text-2xl: 26px; --text-3xl: 34px;
+}
+
+/* ==========================================================================
+   5. Dark mode — a first-class theme, not an inversion.
+   Applied via [data-theme="dark"]; the media query only sets the default.
+   ========================================================================== */
+
+[data-theme="dark"] {
+  --surface:            #0D1626;
+  --surface-2:          #111F33;
+  --surface-raised:     #111F33;
+  --background:         #070D18;
+  --border:             #24344D;
+  --border-strong:      #2F4463;
+  --text:               #F1F5F9;
+  --text-secondary:     #94A3B8;
+  --text-inverse:       #070D18;
+  --primary:            var(--veyrs-blue);
+  --primary-hover:      var(--veyrs-electric);
+  --nav-bg:             #070D18;
+  --nav-text:           #94A3B8;
+  --nav-text-active:    #F1F5F9;
+
+  /* Severity colours are lifted for contrast on dark surfaces while keeping
+     the same hue identity — the semantic meaning must never shift. */
+  --veyrs-critical:      #EF4444;
+  --veyrs-high:          #F97316;
+  --veyrs-medium:        #F59E0B;
+  --veyrs-low:           #3B82F6;
+  --veyrs-informational: #94A3B8;
+  --veyrs-remediated:    #22C55E;
+  --veyrs-accepted-risk: #A78BFA;
+  --veyrs-ai:            #A78BFA;
+  --veyrs-success:       #22C55E;
+  --veyrs-warning:       #F59E0B;
+  --veyrs-danger:        #EF4444;
+  --veyrs-info:          #3B82F6;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface: #0D1626; --surface-2: #111F33; --surface-raised: #111F33;
+    --background: #070D18; --border: #24344D; --border-strong: #2F4463;
+    --text: #F1F5F9; --text-secondary: #94A3B8; --text-inverse: #070D18;
+    --nav-bg: #070D18; --nav-text: #94A3B8; --nav-text-active: #F1F5F9;
+    --veyrs-critical: #EF4444; --veyrs-high: #F97316; --veyrs-medium: #F59E0B;
+    --veyrs-low: #3B82F6; --veyrs-informational: #94A3B8;
+    --veyrs-remediated: #22C55E; --veyrs-accepted-risk: #A78BFA; --veyrs-ai: #A78BFA;
+    --veyrs-success: #22C55E; --veyrs-warning: #F59E0B; --veyrs-danger: #EF4444;
+    --veyrs-info: #3B82F6;
+  }
+}
+
+/* ==========================================================================
+   Severity / status utility classes.
+   One place decides what "critical" looks like everywhere in the product.
+   ========================================================================== */
+
+.sev { display: inline-flex; align-items: center; gap: 6px; font-weight: 600;
+       font-size: var(--text-xs); letter-spacing: .04em; text-transform: uppercase; }
+.sev::before { content: ""; width: 8px; height: 8px; border-radius: 2px;
+               background: currentColor; }
+
+.sev-critical      { color: var(--veyrs-critical); }
+.sev-high          { color: var(--veyrs-high); }
+.sev-medium        { color: var(--veyrs-medium); }
+.sev-low           { color: var(--veyrs-low); }
+.sev-informational { color: var(--veyrs-informational); }
+.sev-remediated    { color: var(--veyrs-remediated); }
+.sev-accepted-risk { color: var(--veyrs-accepted-risk); }
+
+/* Filled badge form for dense tables — 4.5:1 minimum against white text. */
+.badge { display: inline-block; padding: 2px 8px; border-radius: var(--radius-sm);
+         font-size: var(--text-xs); font-weight: 600; letter-spacing: .03em;
+         text-transform: uppercase; color: #fff; white-space: nowrap; }
+.badge-critical      { background: var(--veyrs-critical); }
+.badge-high          { background: var(--veyrs-high); }
+.badge-medium        { background: var(--veyrs-medium); }
+.badge-low           { background: var(--veyrs-low); }
+.badge-informational { background: var(--veyrs-informational); }
+.badge-remediated    { background: var(--veyrs-remediated); }
+.badge-accepted-risk { background: var(--veyrs-accepted-risk); }
+.badge-ai            { background: var(--veyrs-ai); }
+.badge-kev           { background: var(--veyrs-critical); }
+
+/* Outline variant for lower-emphasis contexts (metadata rows, filters). */
+.chip { display: inline-block; padding: 1px 7px; border-radius: var(--radius-sm);
+        font-size: var(--text-xs); font-weight: 600; border: 1px solid currentColor;
+        background: transparent; }
+
+/* AI-originated content marker — subtle, never a second brand. */
+.ai-mark { color: var(--veyrs-ai); border-color: var(--veyrs-ai); }
+
+/* Focus visibility is a security control: keyboard users must always know
+   which control will act. Never remove this outline. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
