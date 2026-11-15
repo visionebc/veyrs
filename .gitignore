@@ -1,0 +1,15 @@
+venv/
+__pycache__/
+*.pyc
+.env
+*.log
+site/out/
+.pytest_cache/
+
+# Plaintext administrator password written by the installer / an operator.
+# Never tracked: the panel git sync committed it to main once (2026-10-27).
+.bootstrap-credentials
+# Local backups (scripts/backup.sh) carry .env and a full dump: never tracked.
+# The directory itself stays (var/.gitkeep): the API unit cannot start without it.
+/var/*
+!/var/.gitkeep

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <title>VEYRS</title>
+  <defs>
+    <linearGradient id="veyrsBrand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#001030"/>
+      <stop offset="55%" stop-color="#0064D8"/>
+      <stop offset="100%" stop-color="#0080FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="url(#veyrsBrand)"/>
+  <g transform="translate(32 32.5) scale(1.32) translate(-32 -32)">
+    <path d="M17.6 18.6 H25.6 L32 36.4 L38.4 18.6 H46.4 L35.6 47.6 H28.4 Z" fill="#FFFFFF"/>
+  </g>
+</svg>
