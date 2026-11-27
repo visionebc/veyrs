@@ -1,0 +1,21 @@
+[Unit]
+Description=VEYRS intelligence refresh tick
+Documentation=file:/opt/veyrs/scripts/sync-intel.sh
+
+[Timer]
+# HOURLY TICK, NOT A SCHEDULE. Since v0.21.0 the cadence lives in
+# organizations.settings.intel_schedule (Threat Intel -> Schedule in the
+# console) and `veyrs intel-due` decides which feeds have actually reached
+# their interval. This unit only decides how often that question is asked, so
+# the answer can change without anybody editing a systemd file over SSH.
+#
+# The jitter stays: NVD's rate limit is per source address and a fleet of
+# installations firing on the hour is how a shared limit gets exhausted. It is
+# smaller than the old 1800s because the window is now an hour, not a day.
+OnCalendar=hourly
+RandomizedDelaySec=600
+# A host that was off still needs to catch up on the feeds that fell due.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

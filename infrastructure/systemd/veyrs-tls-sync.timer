@@ -1,0 +1,14 @@
+[Unit]
+Description=VEYRS web certificate installer, every 30 seconds
+Documentation=file:///opt/veyrs/docs/functional/web-certificate.md
+
+[Timer]
+# A tick, not a job: when nothing changed it reads one row, compares a few
+# files and checks :443 once. Installing a certificate in the console therefore
+# reaches every app node within about 30 seconds, failover node included.
+OnBootSec=20s
+OnUnitActiveSec=30s
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

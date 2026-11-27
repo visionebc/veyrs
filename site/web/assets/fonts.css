@@ -1,0 +1,10 @@
+/* VEYRS product site: self-hosted fonts.
+   The files are the console's own (frontend/console/fonts/), copied into
+   assets/fonts/ by site/web/build_web.py; the repository holds one copy.
+   Inter 4.0 (SIL OFL 1.1) and JetBrains Mono 2.242 (Apache 2.0), Latin subsets. */
+@font-face{font-family:"Inter";font-style:normal;font-weight:400;font-display:swap;src:url("fonts/inter-regular.woff2") format("woff2")}
+@font-face{font-family:"Inter";font-style:normal;font-weight:500;font-display:swap;src:url("fonts/inter-medium.woff2") format("woff2")}
+@font-face{font-family:"Inter";font-style:normal;font-weight:600;font-display:swap;src:url("fonts/inter-semibold.woff2") format("woff2")}
+@font-face{font-family:"Inter";font-style:normal;font-weight:700;font-display:swap;src:url("fonts/inter-bold.woff2") format("woff2")}
+@font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:400;font-display:swap;src:url("fonts/jetbrains-mono-regular.woff2") format("woff2")}
+@font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:500;font-display:swap;src:url("fonts/jetbrains-mono-medium.woff2") format("woff2")}

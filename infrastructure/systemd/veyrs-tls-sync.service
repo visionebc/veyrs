@@ -1,0 +1,20 @@
+[Unit]
+Description=VEYRS web certificate installer (applies the certificate chosen in the console to this node's nginx)
+Documentation=file:///opt/veyrs/docs/functional/web-certificate.md
+After=network-online.target nginx.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Root on purpose, and the ONLY part of VEYRS that writes nginx's TLS files and
+# reloads it. The API that records the decision is sandboxed
+# (ProtectSystem=strict, NoNewPrivileges) and can do neither.
+User=root
+WorkingDirectory=/opt/veyrs/backend
+EnvironmentFile=/opt/veyrs/.env
+Environment=PYTHONPATH=/opt/veyrs/backend
+ExecStart=/opt/veyrs/venv/bin/python -m veyrs tls-sync
+TimeoutStartSec=120
+PrivateTmp=yes
+ProtectHome=yes
+UMask=0077

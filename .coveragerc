@@ -1,0 +1,17 @@
+# Coverage on demand (TD-42). Not part of the runtime or of requirements.txt:
+#   pip install pytest-cov
+#   ./scripts/test.sh --cov --cov-config=.coveragerc --cov-report=term-missing tests/test_x.py
+[run]
+source = backend/veyrs
+branch = True
+omit =
+    */__pycache__/*
+    backend/veyrs/schema_steps/*
+
+[report]
+show_missing = True
+skip_empty = True
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    raise NotImplementedError

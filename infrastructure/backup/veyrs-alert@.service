@@ -1,0 +1,9 @@
+[Unit]
+Description=VEYRS alert: %i failed
+# Started by OnFailure=veyrs-alert@%n.service in the backup units. A failed
+# backup unit used to be visible only in `systemctl --failed`, which nobody reads
+# at 02:15 (TD-34).
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/veyrs-alert.sh %i

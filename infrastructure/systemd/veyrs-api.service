@@ -1,0 +1,68 @@
+[Unit]
+Description=VEYRS API (FastAPI/uvicorn)
+Documentation=https://veyrs-docs.example.com/deployment.html
+After=network-online.target postgresql.service redis-server.service
+Wants=network-online.target
+
+[Service]
+Type=exec
+# Unprivileged since 0.41.0 (R-06). install.sh and scripts/migrate-service-user.sh
+# create the `veyrs` system account. What it may write: /opt/veyrs/var (uploads
+# staging, documents) and the update spool; everything else is read-only. .env is
+# 0640 root:veyrs, so the service can read its own configuration but not rewrite it.
+User=veyrs
+Group=veyrs
+WorkingDirectory=/opt/veyrs
+EnvironmentFile=/opt/veyrs/.env
+Environment=PYTHONPATH=/opt/veyrs/backend
+Environment=PYTHONUNBUFFERED=1
+# The proxies uvicorn believes X-Forwarded-For from. systemd lets EnvironmentFile=
+# override Environment=, so .env can widen this. Behind a second proxy (a load
+# balancer in front of this node's nginx) list both, comma-separated, in .env;
+# otherwise every user is recorded and rate-limited as that proxy.
+Environment=VEYRS_FORWARDED_ALLOW_IPS=127.0.0.1
+# Workers: uvicorn is asyncio, and VEYRS handlers are synchronous SQLAlchemy, so
+# throughput comes from processes, not from a bigger event loop. 4 matches the
+# container's vCPU count; raise together with the Postgres pool, not alone.
+ExecStart=/opt/veyrs/venv/bin/uvicorn veyrs.main:app \
+    --host 127.0.0.1 --port 8000 --workers 4 \
+    --proxy-headers --forwarded-allow-ips=${VEYRS_FORWARDED_ALLOW_IPS} \
+    --timeout-keep-alive 30 --no-server-header
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# --- hardening. The API needs no write access outside its own tree.
+NoNewPrivileges=yes
+# No capability at all: the API binds 127.0.0.1:8000 (unprivileged port) and
+# needs neither raw sockets nor chown.
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+PrivateDevices=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+# Must exist at start: a missing ReadWritePaths entry is fatal under
+# ProtectSystem=strict (226/NAMESPACE), and systemd 252 builds the namespace even
+# for an ExecStartPre=+. git keeps it via var/.gitkeep; install.sh creates it.
+ReadWritePaths=/opt/veyrs/var
+# The update spool (root:veyrs, 0770): the API may only DROP a request there;
+# veyrs-updater.path hands it to the root updater, which is a SEPARATE unit and
+# stays root. "-" = ignored where the updater is not installed.
+ReadWritePaths=-/var/lib/veyrs/update-requests
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

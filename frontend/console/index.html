@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VEYRS Console — Unified Cybersecurity Risk Management</title>
+<meta name="description" content="VEYRS management console.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/static/veyrs-favicon.png" type="image/png">
+<link rel="preload" href="/fonts/inter-regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/inter-semibold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/veyrs-tokens.css?v=2">
+<link rel="stylesheet" href="/console.css?v=24">
+</head>
+<body>
+
+<!-- ── Login ───────────────────────────────────────────────────────────── -->
+<div id="login" class="login" hidden>
+  <div class="login-hero">
+    <img src="/static/veyrs-logo-on-dark-gradient.png" alt="VEYRS — Unified Cybersecurity Risk Management" class="login-logo">
+    <p class="login-chain">Visibility → Exposure → Risk → Action → Security</p>
+    <dl class="veyrs-key">
+      <div><dt>V</dt><dd><b>Visibility</b><span>Complete visibility across assets, vulnerabilities and posture.</span></dd></div>
+      <div><dt>E</dt><dd><b>Exposure</b><span>Attack surface and exposure, internal and external, in context.</span></dd></div>
+      <div><dt>Y</dt><dd><b>Yield</b><span>Prioritising the actions that deliver the greatest risk reduction.</span></dd></div>
+      <div><dt>R</dt><dd><b>Risk</b><span>Assessing, quantifying, prioritising and managing cyber risk.</span></dd></div>
+      <div><dt>S</dt><dd><b>Security</b><span>Comprehensive security management across the organisation.</span></dd></div>
+    </dl>
+    <p class="login-blurb">Assets · Vulnerabilities · Threat Intel · Risk · SLA · Remediation · Compliance</p>
+  </div>
+  <div class="login-panel">
+    <form id="login-form" class="login-form" autocomplete="on">
+      <h1>Sign in</h1>
+      <p class="muted">Enter your organization credentials.</p>
+      <label for="l-org">Organization</label>
+      <input id="l-org" name="organization" autocomplete="organization" required placeholder="your-organization">
+      <label for="l-email">Email or username</label>
+      <!-- type=text, not type=email. The browser's own validation would refuse
+           `jsmith` before the form is ever submitted, so leaving it as `email`
+           makes usernames impossible to type no matter what the backend
+           accepts. -->
+      <input id="l-email" name="username" type="text" autocomplete="username"
+             spellcheck="false" autocapitalize="none" required>
+      <label for="l-pass">Password</label>
+      <input id="l-pass" name="password" type="password" autocomplete="current-password" required>
+      <div id="l-mfa-wrap" hidden>
+        <label for="l-mfa" id="l-mfa-label">Two-factor code</label>
+        <input id="l-mfa" autocomplete="one-time-code" spellcheck="false" autocapitalize="none" maxlength="20">
+        <p class="small muted" id="l-mfa-hint">Lost your phone? A recovery code works here, once.</p>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+      <button type="button" id="sso-btn" class="btn btn-block" hidden style="margin-top:8px">Sign in with SSO</button>
+      <p id="login-error" class="form-error" hidden></p>
+    </form>
+    <p class="login-foot">VEYRS · <a href="/documentation" target="_blank" rel="noopener">Documentation</a></p>
+  </div>
+</div>
+
+<!-- ── Application shell ───────────────────────────────────────────────── -->
+<div id="shell" class="shell" hidden>
+  <a class="skip-link" href="#view" id="skip-link">Skip to main content</a>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="/static/veyrs-mark-gradient.png" alt="" class="brand-mark">
+      <div class="brand-text">
+        <span class="brand-name">VEYRS</span>
+        <span class="brand-org" id="org-name">—</span>
+      </div>
+      <button class="btn-ghost" id="rail-btn" title="Collapse sidebar" aria-label="Collapse sidebar"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M9.5 4.5v15"/></svg></button>
+    </div>
+    <nav class="nav" id="nav" aria-label="Main"></nav>
+    <nav class="nav nav-pinned" id="nav-pinned" aria-label="Configure"></nav>
+    <div class="sidebar-foot">
+      <div class="user-chip" id="user-chip">
+        <a href="#/account" id="account-link" title="My account: two-factor sign-in and password"><span class="avatar" id="user-avatar" aria-hidden="true">·</span><span class="user-meta rail-hide"><span id="user-name">—</span><span class="user-sub">My account</span></span></a>
+      </div>
+      <div class="foot-actions">
+        <button class="icon-btn" id="theme-toggle" title="Toggle theme" aria-label="Toggle theme"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg><span class="rail-hide sr-only">Theme</span></button>
+        <a class="icon-btn" href="/documentation" target="_blank" rel="noopener" title="Documentation" aria-label="Documentation"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 5H9a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2.5z"/><path d="M21.5 5H15a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7.5z"/></svg></a>
+        <button class="icon-btn" id="logout-btn" title="Sign out" aria-label="Sign out"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4M6 12h10"/></svg></button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn only-mobile" id="menu-btn" aria-label="Menu"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <nav class="crumbs" id="crumbs" aria-label="Breadcrumb"></nav>
+      <div class="topbar-right">
+        <form class="search" id="search-form" role="search">
+          <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="q" placeholder="Search findings, assets, CVEs…" aria-label="Search" aria-keyshortcuts="Control+K Meta+K">
+          <kbd aria-hidden="true">Ctrl K</kbd>
+        </form>
+        <button class="icon-btn" id="notif-btn" title="Notifications" aria-label="Notifications"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><span class="badge" id="notif-badge" hidden>0</span></button>
+      </div>
+    </header>
+    <main class="view" id="view" tabindex="-1"><div class="loading">Loading…</div></main>
+  </div>
+</div>
+
+<div id="toast-stack" class="toast-stack" role="status" aria-live="polite"></div>
+<div id="modal-root"></div>
+
+<script src="/app.js?v=52"></script>
+</body>
+</html>
